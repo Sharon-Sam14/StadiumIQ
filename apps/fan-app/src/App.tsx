@@ -22,6 +22,70 @@ export default function App() {
   ]);
   const [showInspector, setShowInspector] = useState(false);
   const [activeBroadcast, setActiveBroadcast] = useState<{ title: string; message: string; severity: string } | null>(null);
+  const [walkProgress, setWalkProgress] = useState(25); // 25% along the wayfinding track
+
+  // Coordinates of reference beacons (MetLife Lobby grid)
+  const beaconA = { id: "BCN-112-A", x: 10, y: 15, name: "Gate A Beacon" };
+  const beaconB = { id: "BCN-112-B", x: 90, y: 15, name: "Gate B Beacon" };
+  const beaconC = { id: "BCN-112-C", x: 50, y: 85, name: "Sec 212 Beacon" };
+
+  // Calculate coordinates along Bezier wayfinding curve: Gate B (92, 50) -> Concourse (60, 75) -> Your Seat (30, 55)
+  const t = walkProgress / 100;
+  const userTrueX = (1 - t) * (1 - t) * 92 + 2 * (1 - t) * t * 60 + t * t * 30;
+  const userTrueY = (1 - t) * (1 - t) * 50 + 2 * (1 - t) * t * 75 + t * t * 55;
+
+  // Real physical distance to beacons
+  const distA = Math.sqrt((userTrueX - beaconA.x) ** 2 + (userTrueY - beaconA.y) ** 2);
+  const distB = Math.sqrt((userTrueX - beaconB.x) ** 2 + (userTrueY - beaconB.y) ** 2);
+  const distC = Math.sqrt((userTrueX - beaconC.x) ** 2 + (userTrueY - beaconC.y) ** 2);
+
+  // Convert distance to RSSI with a simulated sine wave noise
+  const getNoisyRSSI = (dist: number, seed: number) => {
+    const rawRSSI = -20 * Math.log10(dist || 1) - 30; // A = -30 dBm at 1m in 100x100 relative grid
+    const noise = Math.sin(Date.now() / 1500 + seed) * 1.5;
+    return Math.round(rawRSSI + noise);
+  };
+
+  const rssiA = getNoisyRSSI(distA, 1);
+  const rssiB = getNoisyRSSI(distB, 2);
+  const rssiC = getNoisyRSSI(distC, 3);
+
+  // Convert noisy RSSI back to estimated distance
+  const estDistA = 10 ** ((-30 - rssiA) / 20);
+  const estDistB = 10 ** ((-30 - rssiB) / 20);
+  const estDistC = 10 ** ((-30 - rssiC) / 20);
+
+  // Trilaterate 3 distance circles to get calculated (x, y)
+  const triangulate = (
+    x1: number, y1: number, d1: number,
+    x2: number, y2: number, d2: number,
+    x3: number, y3: number, d3: number
+  ) => {
+    const A_coeff = 2 * (x3 - x1);
+    const B_coeff = 2 * (y3 - y1);
+    const C_coeff = d1 * d1 - d3 * d3 - x1 * x1 + x3 * x3 - y1 * y1 + y3 * y3;
+
+    const D_coeff = 2 * (x3 - x2);
+    const E_coeff = 2 * (y3 - y2);
+    const F_coeff = d2 * d2 - d3 * d3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+
+    const det = A_coeff * E_coeff - B_coeff * D_coeff;
+    if (Math.abs(det) < 0.001) {
+      return { x: (x1 + x2 + x3) / 3, y: (y1 + y2 + y3) / 3 };
+    }
+    const calcX = (C_coeff * E_coeff - B_coeff * F_coeff) / det;
+    const calcY = (A_coeff * F_coeff - C_coeff * D_coeff) / det;
+    return {
+      x: Math.max(5, Math.min(95, calcX)),
+      y: Math.max(5, Math.min(95, calcY))
+    };
+  };
+
+  const triangulatedPos = triangulate(
+    beaconA.x, beaconA.y, estDistA,
+    beaconB.x, beaconB.y, estDistB,
+    beaconC.x, beaconC.y, estDistC
+  );
 
   useEffect(() => {
     // Establish WebSocket alerts connection
@@ -222,13 +286,83 @@ export default function App() {
                     <circle cx="92" cy="50" r="2.5" fill="#10B981" />
                     <text x="76" y="44" fill="#9AA8B6" fontSize="3" fontFamily="Outfit">Gate B (12%)</text>
 
+                    {/* Reference Beacons (Blue nodes) */}
+                    <circle cx={beaconA.x} cy={beaconA.y} r="2" fill="#3B82F6" />
+                    <circle cx={beaconB.x} cy={beaconB.y} r="2" fill="#3B82F6" />
+                    <circle cx={beaconC.x} cy={beaconC.y} r="2" fill="#3B82F6" />
+                    
                     {/* Navigation Path highlight (Gold dashed line) */}
                     <path d="M 92 50 Q 75 75 50 65 Q 40 60 30 55" fill="none" stroke="#D4AF37" strokeWidth="1" strokeDasharray="2,2" />
                     <circle cx="30" cy="55" r="2" fill="#D4AF37" />
                     <text x="32" y="58" fill="#D4AF37" fontSize="3" fontWeight="bold" fontFamily="Outfit">Your Seat</text>
+
+                    {/* True User position guide (Subtle grey dot) */}
+                    <circle cx={userTrueX} cy={userTrueY} r="1.5" fill="#586A7A" />
+
+                    {/* Estimated Triangulated Position (Pulsating gold node) */}
+                    <circle cx={triangulatedPos.x} cy={triangulatedPos.y} r="3.5" fill="#10B981" />
+                    <circle 
+                      cx={triangulatedPos.x} 
+                      cy={triangulatedPos.y} 
+                      r="7" 
+                      fill="none" 
+                      stroke="#10B981" 
+                      strokeWidth="0.5" 
+                      className="animate-ping" 
+                      style={{ 
+                        transformOrigin: `${triangulatedPos.x}px ${triangulatedPos.y}px`,
+                        animationDuration: "2s"
+                      }} 
+                    />
                   </svg>
                 </div>
-                
+
+                {/* Simulator Walk progress slider */}
+                <div className="mt-4 p-3 bg-bg-base/40 rounded border border-border-subtle flex flex-col gap-2">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold text-text-secondary uppercase">Simulator: Walk to Seat</span>
+                    <span className="font-mono text-brand-gold font-bold">{walkProgress}% Completed</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100" 
+                    value={walkProgress} 
+                    onChange={(e) => setWalkProgress(Number(e.target.value))}
+                    className="w-full accent-brand-gold bg-bg-surface h-1 rounded-full cursor-pointer appearance-none"
+                  />
+                </div>
+
+                {/* BLE Telemetry Diagnostic Table */}
+                <div className="mt-4 border border-border-subtle rounded-md overflow-hidden bg-bg-surface/5">
+                  <div className="bg-bg-surface/30 p-2 border-b border-border-subtle flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-text-primary uppercase">BLE RSSI TRILATERATION MATRIX</span>
+                    <span className="text-brand-gold font-mono text-[9px]">Pos: ({Math.round(triangulatedPos.x)}, {Math.round(triangulatedPos.y)})</span>
+                  </div>
+                  <div className="p-3 text-[10px] space-y-2 font-mono">
+                    <div className="flex justify-between border-b border-border-subtle pb-1 font-bold text-text-secondary">
+                      <span>BEACON ID</span>
+                      <span>RSSI</span>
+                      <span>EST DIST</span>
+                    </div>
+                    <div className="flex justify-between text-text-primary">
+                      <span>{beaconA.id} (Gate A)</span>
+                      <span className="text-alert-danger">{rssiA} dBm</span>
+                      <span>{estDistA.toFixed(1)}m</span>
+                    </div>
+                    <div className="flex justify-between text-text-primary">
+                      <span>{beaconB.id} (Gate B)</span>
+                      <span className="text-alert-success">{rssiB} dBm</span>
+                      <span>{estDistB.toFixed(1)}m</span>
+                    </div>
+                    <div className="flex justify-between text-text-primary">
+                      <span>{beaconC.id} (Sec 212)</span>
+                      <span className="text-alert-info">{rssiC} dBm</span>
+                      <span>{estDistC.toFixed(1)}m</span>
+                    </div>
+                  </div>
+                </div>
+
                 <p className="text-[10px] text-text-secondary mt-3 text-center">
                   Triangulating indoor position via local Bluetooth Low Energy (BLE) beacons.
                 </p>

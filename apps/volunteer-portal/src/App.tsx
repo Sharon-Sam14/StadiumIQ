@@ -28,6 +28,64 @@ export default function App() {
   const [reportForm, setReportForm] = useState({ description: "", severity: "medium", type: "crowd" });
   const [activeBroadcast, setActiveBroadcast] = useState<{ title: string; message: string; severity: string } | null>(null);
 
+  // BLE beacon node reference coordinates
+  const beaconA = { id: "BCN-112-A", x: 10, y: 15 };
+  const beaconB = { id: "BCN-112-B", x: 90, y: 15 };
+  const beaconC = { id: "BCN-112-C", x: 50, y: 85 };
+
+  // Jake Whitmore is stationed at Section 200 lobby grid (x: 52, y: 66)
+  const userTrueX = 52.0;
+  const userTrueY = 66.5;
+
+  const distA = Math.sqrt((userTrueX - beaconA.x) ** 2 + (userTrueY - beaconA.y) ** 2);
+  const distB = Math.sqrt((userTrueX - beaconB.x) ** 2 + (userTrueY - beaconB.y) ** 2);
+  const distC = Math.sqrt((userTrueX - beaconC.x) ** 2 + (userTrueY - beaconC.y) ** 2);
+
+  const getNoisyRSSI = (dist: number, seed: number) => {
+    const rawRSSI = -20 * Math.log10(dist || 1) - 30;
+    const noise = Math.sin(Date.now() / 2000 + seed) * 1.0;
+    return Math.round(rawRSSI + noise);
+  };
+
+  const rssiA = getNoisyRSSI(distA, 1);
+  const rssiB = getNoisyRSSI(distB, 2);
+  const rssiC = getNoisyRSSI(distC, 3);
+
+  const estDistA = 10 ** ((-30 - rssiA) / 20);
+  const estDistB = 10 ** ((-30 - rssiB) / 20);
+  const estDistC = 10 ** ((-30 - rssiC) / 20);
+
+  const triangulate = (
+    x1: number, y1: number, d1: number,
+    x2: number, y2: number, d2: number,
+    x3: number, y3: number, d3: number
+  ) => {
+    const A_coeff = 2 * (x3 - x1);
+    const B_coeff = 2 * (y3 - y1);
+    const C_coeff = d1 * d1 - d3 * d3 - x1 * x1 + x3 * x3 - y1 * y1 + y3 * y3;
+
+    const D_coeff = 2 * (x3 - x2);
+    const E_coeff = 2 * (y3 - y2);
+    const F_coeff = d2 * d2 - d3 * d3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+
+    const det = A_coeff * E_coeff - B_coeff * D_coeff;
+    if (Math.abs(det) < 0.001) {
+      return { x: (x1 + x2 + x3) / 3, y: (y1 + y2 + y3) / 3 };
+    }
+    const calcX = (C_coeff * E_coeff - B_coeff * F_coeff) / det;
+    const calcY = (A_coeff * F_coeff - C_coeff * D_coeff) / det;
+    return {
+      x: Math.max(5, Math.min(95, calcX)),
+      y: Math.max(5, Math.min(95, calcY))
+    };
+  };
+
+  const triangulatedPos = triangulate(
+    beaconA.x, beaconA.y, estDistA,
+    beaconB.x, beaconB.y, estDistB,
+    beaconC.x, beaconC.y, estDistC
+  );
+
   useEffect(() => {
     // Establish WebSocket alerts connection
     const ws = new WebSocket("ws://localhost:3002");
@@ -157,6 +215,15 @@ export default function App() {
                   <li>**Languages:** Expect French & Wolof speakers from Match 82 attendees.</li>
                   <li>**Key Check:** Ensure wheelchair companion paths are clear at Section 212.</li>
                 </ul>
+                {/* BLE Indoor Triangulation Status */}
+                <div className="mt-4 p-3 bg-bg-base/40 rounded border border-border-subtle/50 font-mono text-[9px] text-text-secondary flex justify-between items-center">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-alert-success animate-pulse shrink-0" />
+                    BLE POSITION COORDINATOR
+                  </span>
+                  <span className="text-brand-gold font-bold">LOBBY: ({Math.round(triangulatedPos.x)}, {Math.round(triangulatedPos.y)})</span>
+                </div>
+
                 <div className="mt-4 pt-4 border-t border-border-subtle/50 flex justify-between items-center text-[10px] text-text-tertiary">
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Shift started: 18:30</span>
                   <span>Briefing v1.4</span>

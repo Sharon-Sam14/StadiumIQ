@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
   Home, 
   MapPin, 
@@ -20,15 +20,27 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 
+interface EcoBalance {
+  ecoPoints: number;
+  fanXP: number;
+  transactions: any[];
+  badges: any[];
+}
+
+interface ChatMessage {
+  role: string;
+  text: string;
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "navigate" | "assistant" | "ticket" | "eco">("home");
   
   // Phase 8 Sustainability & Gamification State
-  const [ecoBalance, setEcoBalance] = useState({
+  const [ecoBalance, setEcoBalance] = useState<EcoBalance>({
     ecoPoints: 240,
     fanXP: 480,
-    transactions: [] as any[],
-    badges: [] as any[]
+    transactions: [],
+    badges: []
   });
   const [challenges, setChallenges] = useState<any[]>([]);
   const [rewards, setRewards] = useState<any[]>([]);
@@ -46,7 +58,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [chatMessage, setChatMessage] = useState("");
-  const [chatLogs, setChatLogs] = useState<{ role: string; text: string }[]>([
+  const [chatLogs, setChatLogs] = useState<ChatMessage[]>([
     { role: "assistant", text: "Welcome to MetLife Stadium! I am your StadiumIQ AI Assistant. How can I help you today?" }
   ]);
   const [showInspector, setShowInspector] = useState(false);
@@ -229,7 +241,7 @@ export default function App() {
           recycling: { pts: 50, desc: "Waste Recycling Station Log" }
         };
         const award = mockAwards[type];
-        setEcoBalance(prev => ({
+        setEcoBalance((prev: EcoBalance) => ({
           ...prev,
           ecoPoints: prev.ecoPoints + award.pts,
           fanXP: prev.fanXP + award.pts * 2
@@ -285,7 +297,7 @@ export default function App() {
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
     const userMsg = chatMessage;
-    setChatLogs(prev => [...prev, { role: "user", text: userMsg }]);
+    setChatLogs((prev: ChatMessage[]) => [...prev, { role: "user", text: userMsg }]);
     setChatMessage("");
 
     // Simulate AI response based on query keywords
@@ -296,7 +308,7 @@ export default function App() {
       } else if (userMsg.toLowerCase().includes("gate") || userMsg.toLowerCase().includes("crowd")) {
         reply = "Gate A is currently experiencing high congestion (92% occupancy). I recommend using Gate B, which is clear and has an estimated wait time of under 3 minutes.";
       }
-      setChatLogs(prev => [...prev, { role: "assistant", text: reply }]);
+      setChatLogs((prev: ChatMessage[]) => [...prev, { role: "assistant", text: reply }]);
     }, 800);
   };
 
@@ -535,7 +547,7 @@ export default function App() {
                     min="0" 
                     max="100" 
                     value={walkProgress} 
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWalkProgress(Number(e.target.value))}
+                    onChange={(e) => setWalkProgress(Number(e.target.value))}
                     className="w-full accent-brand-gold bg-bg-surface h-1 rounded-full cursor-pointer appearance-none"
                   />
                 </div>

@@ -1,0 +1,11 @@
+{
+  "extends": "@stadiumiq/tsconfig/vite.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

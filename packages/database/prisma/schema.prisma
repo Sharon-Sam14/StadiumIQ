@@ -1,0 +1,257 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  fan
+  volunteer
+  staff
+  venue_manager
+  fifa_admin
+}
+
+enum MatchStatus {
+  scheduled
+  live
+  completed
+  postponed
+}
+
+enum IncidentType {
+  medical
+  crowd
+  security
+  infrastructure
+  lost_item
+  other
+}
+
+enum Severity {
+  low
+  medium
+  high
+  critical
+}
+
+enum IncidentStatus {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum TaskPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  completed
+  cancelled
+}
+
+enum Channel {
+  fan_app
+  kiosk
+  volunteer_portal
+  command_center
+}
+
+enum SustainabilityType {
+  energy
+  waste
+  water
+  plastic
+}
+
+model User {
+  id                 String   @id @default(uuid()) @db.Uuid
+  auth0Id            String   @unique @db.VarChar(128)
+  email              String?  @unique @db.VarChar(255)
+  phone              String?  @db.VarChar(50)
+  fullName           String?  @db.VarChar(255)
+  preferredLang      String   @default("en") @db.VarChar(10)
+  role               Role
+  accessibilityNeeds Json     @default("{}")
+  dietaryPrefs       Json     @default("[]")
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
+
+  tickets           Ticket[]
+  reportedIncidents Incident[]          @relation("ReportedIncidents")
+  volunteerTasks    VolunteerTask[]     @relation("VolunteerTasks")
+  assignedTasks     VolunteerTask[]     @relation("AssignedTasks")
+  aiConversations   AIConversation[]    @relation("UserConversations")
+  escalatedChats    AIConversation[]    @relation("EscalatedConversations")
+
+  @@map("users")
+}
+
+model Venue {
+  id               String   @id @default(uuid()) @db.Uuid
+  name             String   @db.VarChar(255)
+  city             String   @db.VarChar(100)
+  country          String   @db.Char(2)
+  capacity         Int
+  timezone         String   @db.VarChar(50)
+  bimVersion       String?  @db.VarChar(20)
+  beaconNetworkId  String?  @db.VarChar(100)
+  latitude         Float
+  longitude        Float
+  createdAt        DateTime @default(now()) @db.Timestamptz
+
+  matches              Match[]
+  incidents            Incident[]
+  sustainabilityEvents SustainabilityEvent[]
+
+  @@map("venues")
+}
+
+model Match {
+  id          String      @id @default(uuid()) @db.Uuid
+  venueId     String      @db.Uuid
+  homeTeam    String      @db.VarChar(100)
+  awayTeam    String      @db.VarChar(100)
+  kickoffTime DateTime    @db.Timestamptz
+  status      MatchStatus @default(scheduled)
+  attendance  Int?
+  createdAt   DateTime    @default(now()) @db.Timestamptz
+
+  venue                Venue                 @relation(fields: [venueId], references: [id])
+  tickets              Ticket[]
+  incidents            Incident[]
+  volunteerTasks       VolunteerTask[]
+  sustainabilityEvents SustainabilityEvent[]
+
+  @@index([venueId])
+  @@map("matches")
+}
+
+model Ticket {
+  id           String    @id @default(uuid()) @db.Uuid
+  fanId        String?   @db.Uuid
+  matchId      String    @db.Uuid
+  seatSection  String    @db.VarChar(20)
+  seatRow      String    @db.VarChar(10)
+  seatNumber   String    @db.VarChar(10)
+  gate         String?   @db.VarChar(10)
+  qrCode       String    @unique
+  isAccessible Boolean   @default(false)
+  isUsed       Boolean   @default(false)
+  usedAt       DateTime? @db.Timestamptz
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+
+  fan   User?  @relation(fields: [fanId], references: [id])
+  match Match  @relation(fields: [matchId], references: [id])
+
+  @@index([fanId])
+  @@index([matchId])
+  @@map("tickets")
+}
+
+model Incident {
+  id           String         @id @default(uuid()) @db.Uuid
+  venueId      String         @db.Uuid
+  matchId      String?        @db.Uuid
+  reportedBy   String?        @db.Uuid
+  type         IncidentType
+  severity     Severity
+  description  String?        @db.Text
+  aiSummary    String?        @db.Text
+  aiActions    Json           @default("[]")
+  locationZone String?        @db.VarChar(100)
+  status       IncidentStatus @default(open)
+  resolvedAt   DateTime?      @db.Timestamptz
+  createdAt    DateTime       @default(now()) @db.Timestamptz
+  updatedAt    DateTime       @updatedAt @db.Timestamptz
+
+  venue      Venue   @relation(fields: [venueId], references: [id])
+  match      Match?  @relation(fields: [matchId], references: [id])
+  reporter   User?   @relation("ReportedIncidents", fields: [reportedBy], references: [id])
+
+  @@index([venueId])
+  @@index([matchId])
+  @@index([reportedBy])
+  @@map("incidents")
+}
+
+model VolunteerTask {
+  id          String       @id @default(uuid()) @db.Uuid
+  volunteerId String?      @db.Uuid
+  assignedById String?     @db.Uuid
+  matchId     String?      @db.Uuid
+  title       String       @db.VarChar(255)
+  description String?      @db.Text
+  priority    TaskPriority @default(medium)
+  status      TaskStatus   @default(pending)
+  dueAt       DateTime?    @db.Timestamptz
+  completedAt DateTime?    @db.Timestamptz
+  createdAt   DateTime     @default(now()) @db.Timestamptz
+
+  volunteer  User?  @relation("VolunteerTasks", fields: [volunteerId], references: [id])
+  assigner   User?  @relation("AssignedTasks", fields: [assignedById], references: [id])
+  match      Match? @relation(fields: [matchId], references: [id])
+
+  @@index([volunteerId])
+  @@index([assignedById])
+  @@index([matchId])
+  @@map("volunteer_tasks")
+}
+
+model AIConversation {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String?  @db.Uuid
+  sessionId   String   @db.VarChar(128)
+  channel     Channel
+  language    String   @db.VarChar(10)
+  messages    Json     @default("[]")
+  escalated   Boolean  @default(false)
+  escalatedTo String?  @db.Uuid
+  confidence  Float?
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+
+  user       User? @relation("UserConversations", fields: [userId], references: [id])
+  escalatedToUser User? @relation("EscalatedConversations", fields: [escalatedTo], references: [id])
+
+  @@index([userId])
+  @@index([escalatedTo])
+  @@map("ai_conversations")
+}
+
+model SustainabilityEvent {
+  id         String             @id @default(uuid()) @db.Uuid
+  venueId    String             @db.Uuid
+  matchId    String?            @db.Uuid
+  eventType  SustainabilityType
+  zone       String?            @db.VarChar(100)
+  value      Float
+  unit       String             @db.VarChar(20)
+  recordedAt DateTime           @default(now()) @db.Timestamptz
+
+  venue Venue  @relation(fields: [venueId], references: [id])
+  match Match? @relation(fields: [matchId], references: [id])
+
+  @@index([venueId])
+  @@index([matchId])
+  @@map("sustainability_events")
+}
+
+model KnowledgeBase {
+  id        String   @id @default(uuid()) @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  embedding Unsupported("vector(384)")?
+  createdAt DateTime @default(now()) @db.Timestamptz
+
+  @@map("knowledge_base")
+}

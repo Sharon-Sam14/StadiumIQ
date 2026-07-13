@@ -1,0 +1,67 @@
+_format_version: "2.1"
+_transform: true
+
+services:
+  - name: fan-service
+    url: http://fan-service:3001
+    routes:
+      - name: fan-routes
+        paths:
+          - /api/v1/fans
+          - /api/v1/tickets
+  - name: volunteer-service
+    url: http://volunteer-service:3002
+    routes:
+      - name: volunteer-routes
+        paths:
+          - /api/v1/volunteers
+          - /api/v1/tasks
+  - name: transport-service
+    url: http://transport-service:3003
+    routes:
+      - name: transport-routes
+        paths:
+          - /api/v1/transport
+  - name: ai-service
+    url: http://ai-service:8000
+    routes:
+      - name: ai-routes
+        paths:
+          - /api/v1/ai
+  - name: navigation-service
+    url: http://navigation-service:8080
+    routes:
+      - name: navigation-routes
+        paths:
+          - /api/v1/navigation
+
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PATCH
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - Authorization
+      exposed_headers:
+        - X-Request-Id
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    config:
+      minute: 100
+      policy: local
+      fault_tolerant: true

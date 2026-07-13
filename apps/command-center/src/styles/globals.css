@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-outfit: 'Outfit', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+body {
+  background-color: #080A0C;
+  color: #F0F4F8;
+  font-family: var(--font-inter);
+  overflow-x: hidden;
+}
+
+/* Custom Webkit scrollbars representing the Obsidian theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #080A0C;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1C242D;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2D3A49;
+}
+
+/* Glassmorphism utility card layouts */
+.glass-panel {
+  background: rgba(16, 20, 24, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Glowing animations for maps or critical alert points */
+@keyframes gold-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(214, 175, 55, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(214, 175, 55, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(214, 175, 55, 0);
+  }
+}
+
+.animate-pulse-gold {
+  animation: gold-pulse 2s infinite;
+}

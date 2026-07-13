@@ -2,12 +2,13 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import { z } from "zod";
-import { prisma, TaskStatus, IncidentType, Severity, IncidentStatus } from "@stadiumiq/database";
+import { prisma, TaskStatus, IncidentType, Severity, IncidentStatus, Role } from "@stadiumiq/database";
 import { createClient } from "redis";
 import dotenv from "dotenv";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { Kafka } from "kafkajs";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -391,6 +392,486 @@ app.get("/api/v1/volunteers/analytics", async (_req: Request, res: Response) => 
       fallback: true
     };
     return sendEnvelope(res, fallbackData);
+  }
+});
+
+// --- PHASE 8: SUSTAINABILITY & GAMIFICATION ENDPOINTS ---
+
+// Helpers to get or create a mock fan user for testing ease
+const getOrCreateTestUser = async () => {
+  let user = await prisma.user.findFirst({
+    where: { role: Role.fan }
+  });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        auth0Id: "auth0|fan-test-999",
+        email: "eco.fan@worldcup.com",
+        fullName: "Eco Fan",
+        role: Role.fan,
+        preferredLang: "en"
+      }
+    });
+  }
+  return user;
+};
+
+// 1. GET /api/v1/sustainability/points/balance
+app.get("/api/v1/sustainability/points/balance", async (_req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateTestUser();
+    
+    // Fetch transactions
+    const transactions = await prisma.ecoPointTransaction.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" }
+    });
+
+    // Calculate totals
+    const totalEarned = transactions
+      .filter(t => t.type === "EARN")
+      .reduce((sum, t) => sum + t.points, 0);
+    const totalSpent = transactions
+      .filter(t => t.type === "SPEND")
+      .reduce((sum, t) => sum + t.points, 0);
+    const currentBalance = Math.max(0, totalEarned - totalSpent);
+
+    // Get leaderboard entry for Fan XP
+    const leaderboardEntry = await prisma.leaderboard.findUnique({
+      where: { userId: user.id }
+    });
+    const xpPoints = leaderboardEntry?.xpPoints || 120; // Default XP for demo visual
+
+    // Ensure default achievements exist
+    const achievementCount = await prisma.achievement.count();
+    if (achievementCount === 0) {
+      await prisma.achievement.createMany({
+        data: [
+          { title: "Green Champion", description: "Earned 100+ total Eco Points through sustainable actions.", xpReward: 200, icon: "award" },
+          { title: "Zero Waste Hero", description: "Logged at least 2kg of recycled waste.", xpReward: 150, icon: "recycle" },
+          { title: "Transit Legend", description: "Checked in using public subway transit 3 matches in a row.", xpReward: 300, icon: "train" }
+        ],
+        skipDuplicates: true
+      });
+    }
+
+    // Get user badges
+    const badges = await prisma.userBadge.findMany({
+      where: { userId: user.id },
+      include: { achievement: true }
+    });
+
+    return sendEnvelope(res, {
+      userId: user.id,
+      ecoPoints: currentBalance,
+      fanXP: xpPoints,
+      transactions,
+      badges: badges.map(b => b.achievement)
+    });
+  } catch (error: any) {
+    console.error("Error fetching eco points balance:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// Zod schema for point transaction logs
+const pointsTransactionSchema = z.object({
+  points: z.number().int().positive(),
+  type: z.enum(["EARN", "SPEND"]),
+  description: z.string().min(3)
+});
+
+// 2. POST /api/v1/sustainability/points/transaction
+app.post("/api/v1/sustainability/points/transaction", validate(pointsTransactionSchema), async (req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateTestUser();
+    const { points, type, description } = req.body;
+
+    const tx = await prisma.ecoPointTransaction.create({
+      data: {
+        userId: user.id,
+        points,
+        type,
+        description
+      }
+    });
+
+    // Update leaderboard aggregates
+    const currentLeaderboard = await prisma.leaderboard.findUnique({
+      where: { userId: user.id }
+    });
+
+    const addXp = type === "EARN" ? points * 2 : 0; // Earned points count double towards XP
+    const newEco = type === "EARN" 
+      ? (currentLeaderboard?.ecoPoints || 0) + points 
+      : Math.max(0, (currentLeaderboard?.ecoPoints || 0) - points);
+    const newXp = (currentLeaderboard?.xpPoints || 120) + addXp;
+
+    await prisma.leaderboard.upsert({
+      where: { userId: user.id },
+      update: {
+        ecoPoints: newEco,
+        xpPoints: newXp
+      },
+      create: {
+        userId: user.id,
+        userName: user.fullName || "Eco Fan",
+        ecoPoints: newEco,
+        xpPoints: newXp
+      }
+    });
+
+    // Check for achievements unlocks (e.g. earned 100 points -> Unlock Green Champion badge)
+    if (newEco >= 100) {
+      const greenChampion = await prisma.achievement.findFirst({
+        where: { title: "Green Champion" }
+      });
+      if (greenChampion) {
+        await prisma.userBadge.upsert({
+          where: {
+            userId_achievementId: {
+              userId: user.id,
+              achievementId: greenChampion.id
+            }
+          },
+          update: {},
+          create: {
+            userId: user.id,
+            achievementId: greenChampion.id
+          }
+        });
+      }
+    }
+
+    return sendEnvelope(res, { success: true, transaction: tx });
+  } catch (error: any) {
+    console.error("Error creating points transaction:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// 3. GET /api/v1/sustainability/rewards
+app.get("/api/v1/sustainability/rewards", async (_req: Request, res: Response) => {
+  try {
+    let rewards = await prisma.reward.findMany();
+    if (rewards.length === 0) {
+      // Seed default rewards for demo if empty
+      await prisma.reward.createMany({
+        data: [
+          { title: "Free Organic Concession Hotdog", description: "Redeem for 1 organic hotdog at MetLife Section 112 Concessions.", pointCost: 80, stock: 150, code: "REW-HDOG-982" },
+          { title: "20% Off Merchandise", description: "Get a 20% discount on official FIFA World Cup 2026 merchandise.", pointCost: 150, stock: 100, code: "REW-MERCH-811" },
+          { title: "Free Subway Ride Voucher", description: "Valid for one single trip on the local subway system.", pointCost: 50, stock: 500, code: "REW-SUBWAY-443" }
+        ],
+        skipDuplicates: true
+      });
+      rewards = await prisma.reward.findMany();
+    }
+    return sendEnvelope(res, rewards);
+  } catch (error: any) {
+    console.error("Error fetching rewards:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// Zod schema for reward redemption
+const redeemRewardSchema = z.object({
+  rewardId: z.string().uuid()
+});
+
+// 4. POST /api/v1/sustainability/rewards/redeem
+app.post("/api/v1/sustainability/rewards/redeem", validate(redeemRewardSchema), async (req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateTestUser();
+    const { rewardId } = req.body;
+
+    const reward = await prisma.reward.findUnique({
+      where: { id: rewardId }
+    });
+    if (!reward) {
+      return sendError(res, "NOT_FOUND", "Reward option not found.", {}, 404);
+    }
+    if (reward.stock <= 0) {
+      return sendError(res, "OUT_OF_STOCK", "This reward is out of stock.", {}, 400);
+    }
+
+    // Check user points balance
+    const transactions = await prisma.ecoPointTransaction.findMany({
+      where: { userId: user.id }
+    });
+    const totalEarned = transactions.filter(t => t.type === "EARN").reduce((sum, t) => sum + t.points, 0);
+    const totalSpent = transactions.filter(t => t.type === "SPEND").reduce((sum, t) => sum + t.points, 0);
+    const balance = Math.max(0, totalEarned - totalSpent);
+
+    if (balance < reward.pointCost) {
+      return sendError(res, "INSUFFICIENT_FUNDS", "You do not have enough Eco Points.", { required: reward.pointCost, balance }, 400);
+    }
+
+    // Spend points
+    await prisma.ecoPointTransaction.create({
+      data: {
+        userId: user.id,
+        points: reward.pointCost,
+        type: "SPEND",
+        description: `Redeemed Reward: ${reward.title}`
+      }
+    });
+
+    // Reduce stock
+    await prisma.reward.update({
+      where: { id: rewardId },
+      data: { stock: reward.stock - 1 }
+    });
+
+    // Update leaderboard balance
+    await prisma.leaderboard.update({
+      where: { userId: user.id },
+      data: {
+        ecoPoints: { decrement: reward.pointCost }
+      }
+    });
+
+    // Generate unique voucher code
+    const voucherCode = `VOUCH-${reward.code}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+    return sendEnvelope(res, {
+      success: true,
+      voucherCode,
+      message: `Redeemed ${reward.title} successfully! Please scan the voucher QR code at the ticket office/concessions.`
+    });
+  } catch (error: any) {
+    console.error("Error redeeming reward:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// 5. GET /api/v1/sustainability/challenges
+app.get("/api/v1/sustainability/challenges", async (_req: Request, res: Response) => {
+  try {
+    let challenges = await prisma.challenge.findMany();
+    if (challenges.length === 0) {
+      // Seed default challenges if empty
+      await prisma.challenge.createMany({
+        data: [
+          { title: "Public Transit Commuter", description: "Use the subway or shuttle bus to get to MetLife Stadium.", pointsValue: 30, xpValue: 60, type: "DAILY", targetCount: 1 },
+          { title: "Recycling Master", description: "Recycle at least 0.5kg of plastic, glass, or cans at a recycling station.", pointsValue: 40, xpValue: 80, type: "DAILY", targetCount: 1 },
+          { title: "Sponsor Booth Explorer", description: "Visit and check in at 3 sponsor experience tents around the stadium gates.", pointsValue: 50, xpValue: 100, type: "MISSION", targetCount: 3 },
+          { title: "Sensory Zone Supporter", description: "Visit a designated accessibility booth or sensory-friendly zone.", pointsValue: 25, xpValue: 50, type: "MISSION", targetCount: 1 }
+        ],
+        skipDuplicates: true
+      });
+      challenges = await prisma.challenge.findMany();
+    }
+    return sendEnvelope(res, challenges);
+  } catch (error: any) {
+    console.error("Error fetching challenges:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// 6. GET /api/v1/sustainability/leaderboard
+app.get("/api/v1/sustainability/leaderboard", async (_req: Request, res: Response) => {
+  try {
+    let standings = await prisma.leaderboard.findMany({
+      orderBy: { xpPoints: "desc" },
+      take: 10
+    });
+
+    if (standings.length === 0) {
+      // Seed default mock leaderboard for visuals
+      const user = await getOrCreateTestUser();
+      await prisma.leaderboard.createMany({
+        data: [
+          { userId: user.id, userName: user.fullName || "Eco Fan", xpPoints: 240, ecoPoints: 120 },
+          { userId: crypto.randomUUID(), userName: "Amara Diallo", xpPoints: 310, ecoPoints: 160 },
+          { userId: crypto.randomUUID(), userName: "John Doe", xpPoints: 190, ecoPoints: 95 },
+          { userId: crypto.randomUUID(), userName: "Sarah Conner", xpPoints: 150, ecoPoints: 75 }
+        ],
+        skipDuplicates: true
+      });
+      standings = await prisma.leaderboard.findMany({
+        orderBy: { xpPoints: "desc" },
+        take: 10
+      });
+    }
+
+    return sendEnvelope(res, standings);
+  } catch (error: any) {
+    console.error("Error fetching leaderboard:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// 7. GET /api/v1/sustainability/metrics
+app.get("/api/v1/sustainability/metrics", async (_req: Request, res: Response) => {
+  try {
+    // Return aggregated environmental metrics
+    const metrics = await prisma.sustainabilityMetric.findMany();
+    if (metrics.length === 0) {
+      // Seed initial impact numbers
+      await prisma.sustainabilityMetric.createMany({
+        data: [
+          { metricType: "waste_saved", value: 1424.8 },
+          { metricType: "carbon_offset", value: 2950.4 },
+          { metricType: "water_refills", value: 4390.0 },
+          { metricType: "transit_rides", value: 6810.0 }
+        ]
+      });
+    }
+
+    const aggregated = {
+      wasteSavedKg: metrics.find(m => m.metricType === "waste_saved")?.value || 1424.8,
+      carbonOffsetKg: metrics.find(m => m.metricType === "carbon_offset")?.value || 2950.4,
+      waterRefills: metrics.find(m => m.metricType === "water_refills")?.value || 4390,
+      transitRides: metrics.find(m => m.metricType === "transit_rides")?.value || 6810,
+    };
+
+    return sendEnvelope(res, aggregated);
+  } catch (error: any) {
+    console.error("Error fetching metrics:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// Zod schema for QR validation
+const validateQrSchema = z.object({
+  qrCode: z.string().min(5),
+  locationType: z.enum(["transit", "sponsor", "water", "recycling"])
+});
+
+// 8. POST /api/v1/sustainability/qr/validate
+app.post("/api/v1/sustainability/qr/validate", validate(validateQrSchema), async (req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateTestUser();
+    const { qrCode, locationType } = req.body;
+
+    let points = 10;
+    let description = "QR Code Check-in";
+
+    if (locationType === "transit") {
+      points = 30;
+      description = "Subway Transit Ticket Verified via QR scan";
+      await prisma.sustainabilityMetric.updateMany({
+        where: { metricType: "transit_rides" },
+        data: { value: { increment: 1 } }
+      });
+    } else if (locationType === "sponsor") {
+      points = 20;
+      description = `Checked in at Sponsor Exhibit QR: ${qrCode}`;
+    } else if (locationType === "water") {
+      points = 15;
+      description = `Water Refill Station Check-in`;
+      await prisma.sustainabilityMetric.updateMany({
+        where: { metricType: "water_refills" },
+        data: { value: { increment: 1 } }
+      });
+    }
+
+    // Award Points
+    await prisma.ecoPointTransaction.create({
+      data: {
+        userId: user.id,
+        points,
+        type: "EARN",
+        description
+      }
+    });
+
+    // Update Leaderboard
+    await prisma.leaderboard.upsert({
+      where: { userId: user.id },
+      update: {
+        ecoPoints: { increment: points },
+        xpPoints: { increment: points * 2 }
+      },
+      create: {
+        userId: user.id,
+        userName: user.fullName || "Eco Fan",
+        ecoPoints: points,
+        xpPoints: points * 2
+      }
+    });
+
+    return sendEnvelope(res, {
+      success: true,
+      pointsEarned: points,
+      xpEarned: points * 2,
+      description
+    });
+  } catch (error: any) {
+    console.error("Error validating check-in:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
+  }
+});
+
+// Zod schema for recycling logs
+const recyclingLogSchema = z.object({
+  weightKg: z.number().positive(),
+  wasteType: z.enum(["plastic", "paper", "can", "glass"])
+});
+
+// 9. POST /api/v1/sustainability/recycling/log
+app.post("/api/v1/sustainability/recycling/log", validate(recyclingLogSchema), async (req: Request, res: Response) => {
+  try {
+    const user = await getOrCreateTestUser();
+    const { weightKg, wasteType } = req.body;
+
+    // 50 points per KG recycled
+    const pointsEarned = Math.round(weightKg * 50);
+
+    const log = await prisma.recyclingLog.create({
+      data: {
+        userId: user.id,
+        weightKg,
+        wasteType,
+        pointsEarned
+      }
+    });
+
+    // Award Points
+    await prisma.ecoPointTransaction.create({
+      data: {
+        userId: user.id,
+        points: pointsEarned,
+        type: "EARN",
+        description: `Recycled ${weightKg.toFixed(2)}kg of ${wasteType}`
+      }
+    });
+
+    // Update global aggregate metrics
+    await prisma.sustainabilityMetric.updateMany({
+      where: { metricType: "waste_saved" },
+      data: { value: { increment: weightKg } }
+    });
+
+    await prisma.sustainabilityMetric.updateMany({
+      where: { metricType: "carbon_offset" },
+      data: { value: { increment: weightKg * 1.5 } } // Assume 1.5kg CO2 offset per kg recycled
+    });
+
+    // Update Leaderboard
+    await prisma.leaderboard.upsert({
+      where: { userId: user.id },
+      update: {
+        ecoPoints: { increment: pointsEarned },
+        xpPoints: { increment: pointsEarned * 2 }
+      },
+      create: {
+        userId: user.id,
+        userName: user.fullName || "Eco Fan",
+        ecoPoints: pointsEarned,
+        xpPoints: pointsEarned * 2
+      }
+    });
+
+    return sendEnvelope(res, {
+      success: true,
+      log,
+      pointsEarned,
+      xpEarned: pointsEarned * 2
+    });
+  } catch (error: any) {
+    console.error("Error logging recycling action:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", error.message, {}, 500);
   }
 });
 

@@ -235,10 +235,14 @@ async function main() {
     const id = crypto.randomUUID();
     const vec = generateMockVector(384, chunk.embeddingText);
     const vectorStr = `[${vec.join(",")}]`;
-    await prisma.$executeRawUnsafe(
-      `INSERT INTO knowledge_base (id, title, content, embedding) VALUES ($1::uuid, $2, $3, $4::vector)`,
-      id, chunk.title, chunk.content, vectorStr
-    );
+    await prisma.knowledgeBase.create({
+      data: {
+        id,
+        title: chunk.title,
+        content: chunk.content,
+        embedding: vectorStr,
+      },
+    });
   }
 
   console.log("Database seeding completed successfully!");

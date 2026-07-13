@@ -7,15 +7,44 @@ import {
   Sparkles, 
   Compass, 
   User, 
-  ChevronRight,
-  Send,
-  AlertTriangle,
-  Languages
+  ChevronRight, 
+  Send, 
+  AlertTriangle, 
+  Languages,
+  Leaf,
+  Award,
+  QrCode,
+  Gift,
+  Trophy,
+  Activity
 } from "lucide-react";
 import clsx from "clsx";
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<"home" | "navigate" | "assistant" | "ticket">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "navigate" | "assistant" | "ticket" | "eco">("home");
+  
+  // Phase 8 Sustainability & Gamification State
+  const [ecoBalance, setEcoBalance] = useState({
+    ecoPoints: 240,
+    fanXP: 480,
+    transactions: [] as any[],
+    badges: [] as any[]
+  });
+  const [challenges, setChallenges] = useState<any[]>([]);
+  const [rewards, setRewards] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState({
+    wasteSavedKg: 1424.8,
+    carbonOffsetKg: 2950.4,
+    waterRefills: 4390,
+    transitRides: 6810
+  });
+
+  const [sortingInput, setSortingInput] = useState("");
+  const [sortingOutput, setSortingOutput] = useState("");
+  const [activeVoucher, setActiveVoucher] = useState<{ title: string; code: string } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   const [chatMessage, setChatMessage] = useState("");
   const [chatLogs, setChatLogs] = useState<{ role: string; text: string }[]>([
     { role: "assistant", text: "Welcome to MetLife Stadium! I am your StadiumIQ AI Assistant. How can I help you today?" }
@@ -111,6 +140,148 @@ export default function App() {
     };
   }, []);
 
+  // --- PHASE 8: SUSTAINABILITY & GAMIFICATION HANDLERS ---
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const fetchEcoData = () => {
+    fetch("http://localhost:3002/api/v1/sustainability/points/balance")
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setEcoBalance({
+            ecoPoints: envelope.data.ecoPoints,
+            fanXP: envelope.data.fanXP,
+            transactions: envelope.data.transactions,
+            badges: envelope.data.badges
+          });
+        }
+      })
+      .catch(err => console.warn("Eco points API fallback enabled:", err.message));
+
+    fetch("http://localhost:3002/api/v1/sustainability/challenges")
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setChallenges(envelope.data);
+        }
+      })
+      .catch(err => console.warn("Challenges API fallback enabled:", err.message));
+
+    fetch("http://localhost:3002/api/v1/sustainability/rewards")
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setRewards(envelope.data);
+        }
+      })
+      .catch(err => console.warn("Rewards API fallback enabled:", err.message));
+
+    fetch("http://localhost:3002/api/v1/sustainability/leaderboard")
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setLeaderboard(envelope.data);
+        }
+      })
+      .catch(err => console.warn("Leaderboard API fallback enabled:", err.message));
+
+    fetch("http://localhost:3002/api/v1/sustainability/metrics")
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setMetrics(envelope.data);
+        }
+      })
+      .catch(err => console.warn("Metrics API fallback enabled:", err.message));
+  };
+
+  useEffect(() => {
+    if (activeTab === "eco") {
+      fetchEcoData();
+    }
+  }, [activeTab]);
+
+  const handleQrCheckin = (type: "transit" | "sponsor" | "water" | "recycling") => {
+    fetch("http://localhost:3002/api/v1/sustainability/qr/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        qrCode: `QR-SIM-${type.toUpperCase()}-${Math.floor(Math.random() * 900 + 100)}`,
+        locationType: type
+      })
+    })
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          triggerToast(`Check-in Success! Earned +${envelope.data.pointsEarned} Eco Points & +${envelope.data.xpEarned} XP!`);
+          fetchEcoData();
+        }
+      })
+      .catch(err => {
+        console.warn("QR checkin failed, running simulated award offline:", err.message);
+        const mockAwards = {
+          transit: { pts: 30, desc: "Public Transit Commute" },
+          sponsor: { pts: 20, desc: "Sponsor Booth Check-in" },
+          water: { pts: 15, desc: "Water Refill Station Check-in" },
+          recycling: { pts: 50, desc: "Waste Recycling Station Log" }
+        };
+        const award = mockAwards[type];
+        setEcoBalance(prev => ({
+          ...prev,
+          ecoPoints: prev.ecoPoints + award.pts,
+          fanXP: prev.fanXP + award.pts * 2
+        }));
+        triggerToast(`Check-in Success! Earned +${award.pts} Eco Points (Offline Fallback)`);
+      });
+  };
+
+  const handleWasteSortingCheck = () => {
+    if (!sortingInput.trim()) return;
+    const waste = sortingInput.toLowerCase();
+    let instruction = "Eco Waste Guide: Please throw this in the Obsidian General Waste bin.";
+    if (waste.includes("bottle") || waste.includes("plastic") || waste.includes("cup")) {
+      instruction = "Recycle: Place in the GREEN recycling bin. Earn +50 Eco Points on scan!";
+    } else if (waste.includes("can") || waste.includes("aluminum") || waste.includes("soda")) {
+      instruction = "Recycle: Place in the SILVER can bin. Earn +50 Eco Points on scan!";
+    } else if (waste.includes("cardboard") || waste.includes("box") || waste.includes("paper")) {
+      instruction = "Recycle: Place in the BLUE paper bin. Earn +50 Eco Points on scan!";
+    } else if (waste.includes("food") || waste.includes("apple") || waste.includes("organic") || waste.includes("hotdog")) {
+      instruction = "Compost: Place in the BROWN compost/organic bin. Reduces landfill carbon emissions.";
+    }
+    setSortingOutput(instruction);
+  };
+
+  const handleRedeemReward = (rewardId: string, title: string) => {
+    fetch("http://localhost:3002/api/v1/sustainability/rewards/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rewardId })
+    })
+      .then(res => res.json())
+      .then(envelope => {
+        if (envelope.success && envelope.data) {
+          setActiveVoucher({
+            title,
+            code: envelope.data.voucherCode
+          });
+          fetchEcoData();
+        } else {
+          triggerToast(envelope.error?.message || "Redemption failed.");
+        }
+      })
+      .catch(err => {
+        console.warn("Redemption API failed, running simulated redemption:", err.message);
+        setActiveVoucher({
+          title,
+          code: `VOUCH-MOCK-${Math.random().toString(36).substring(3, 9).toUpperCase()}`
+        });
+        triggerToast("Redeemed successfully (Offline Fallback)");
+      });
+  };
+
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
     const userMsg = chatMessage;
@@ -133,6 +304,42 @@ export default function App() {
     <div className="min-h-screen bg-bg-base text-text-primary flex flex-col items-center justify-start pb-20 select-none">
       {/* Target device shell for mobile testing, wraps nicely on desktop */}
       <div className="w-full max-w-[480px] min-h-screen flex flex-col bg-bg-surface/20 border-x border-border-subtle relative">
+        {/* Toast Alert overlay */}
+        {toastMessage && (
+          <div className="absolute top-4 left-4 right-4 bg-brand-green-deep/95 border border-brand-gold/40 text-text-primary px-4 py-3 rounded-md text-xs font-semibold shadow-lg backdrop-blur-md flex items-center justify-between z-50 animate-bounce">
+            <span>{toastMessage}</span>
+            <button onClick={() => setToastMessage(null)} className="text-[10px] uppercase font-bold text-brand-gold hover:text-text-primary">Dismiss</button>
+          </div>
+        )}
+
+        {/* Voucher Modal overlay */}
+        {activeVoucher && (
+          <div className="absolute inset-0 bg-bg-base/85 flex items-center justify-center p-6 z-50 backdrop-blur-sm">
+            <div className="glass-panel p-6 rounded-md border border-brand-gold/30 bg-bg-surface max-w-[320px] w-full text-center">
+              <span className="text-[10px] bg-brand-gold/15 text-brand-gold px-3 py-1 rounded-full font-bold uppercase tracking-wider">
+                Voucher Redeemed!
+              </span>
+              <h4 className="font-outfit font-bold text-sm mt-3">{activeVoucher.title}</h4>
+              
+              <div className="w-36 h-36 bg-white p-2 rounded-sm my-4 mx-auto flex items-center justify-center border">
+                <div className="w-full h-full border border-bg-base border-dashed flex flex-col items-center justify-center text-bg-base">
+                  <span className="text-[8px] font-mono font-bold">SCAN VOUCHER</span>
+                  <QrCode className="w-16 h-16 my-1 text-brand-green-deep" />
+                  <span className="text-[8px] font-mono font-bold">{activeVoucher.code}</span>
+                </div>
+              </div>
+
+              <p className="text-[10px] text-text-secondary">Scan this code at concessions/tickets to claim your reward.</p>
+              
+              <button 
+                onClick={() => setActiveVoucher(null)}
+                className="mt-4 bg-brand-gold hover:bg-brand-gold/90 text-bg-base text-xs font-bold py-2 px-4 rounded-md w-full transition-colors duration-150"
+              >
+                Close Voucher
+              </button>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <header className="h-16 px-4 border-b border-border-subtle flex justify-between items-center bg-bg-surface/50 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-2">
@@ -471,6 +678,233 @@ export default function App() {
             </div>
           )}
 
+          {/* VIEW: ECO */}
+          {activeTab === "eco" && (
+            <div className="space-y-4 animate-fade-in text-xs">
+              
+              {/* Header Eco Balance Cards (Points + XP) */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass-panel p-4 rounded-md border border-brand-gold/20 bg-bg-surface flex flex-col justify-between">
+                  <div className="flex items-center gap-2 text-brand-gold">
+                    <Leaf className="w-4 h-4" />
+                    <span className="font-bold uppercase tracking-wider text-[9px]">Eco Points</span>
+                  </div>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary mt-2">{ecoBalance.ecoPoints}</span>
+                  <span className="text-[9px] text-text-secondary mt-1">Ready for redemption</span>
+                </div>
+
+                <div className="glass-panel p-4 rounded-md border border-brand-green-light/20 bg-bg-surface flex flex-col justify-between">
+                  <div className="flex items-center gap-2 text-alert-success">
+                    <Trophy className="w-4 h-4" />
+                    <span className="font-bold uppercase tracking-wider text-[9px]">Fan XP Level</span>
+                  </div>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary mt-2">{ecoBalance.fanXP} XP</span>
+                  <div className="w-full bg-bg-base h-1 rounded-full overflow-hidden mt-1.5">
+                    <div className="bg-alert-success h-full" style={{ width: `${Math.min(100, (ecoBalance.fanXP / 1000) * 100)}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* QR Code Check-in Simulator */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <QrCode className="w-4 h-4 text-brand-gold" />
+                  QR Check-in Simulator (Earn Points)
+                </h4>
+                <p className="text-text-secondary mt-1 text-[10px]">
+                  Scan codes at bins, refill stations, sponsor booths, or transit to redeem points instantly.
+                </p>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button 
+                    onClick={() => handleQrCheckin("transit")}
+                    className="bg-bg-base hover:bg-bg-elevated border border-border-subtle p-2.5 rounded text-left flex items-center justify-between transition-all"
+                  >
+                    <span>🚇 Public Transit</span>
+                    <span className="text-brand-gold font-bold">+30p</span>
+                  </button>
+                  <button 
+                    onClick={() => handleQrCheckin("recycling")}
+                    className="bg-bg-base hover:bg-bg-elevated border border-border-subtle p-2.5 rounded text-left flex items-center justify-between transition-all"
+                  >
+                    <span>♻️ Recycling Bin</span>
+                    <span className="text-brand-gold font-bold">+50p</span>
+                  </button>
+                  <button 
+                    onClick={() => handleQrCheckin("water")}
+                    className="bg-bg-base hover:bg-bg-elevated border border-border-subtle p-2.5 rounded text-left flex items-center justify-between transition-all"
+                  >
+                    <span>💧 Water Refill</span>
+                    <span className="text-brand-gold font-bold">+15p</span>
+                  </button>
+                  <button 
+                    onClick={() => handleQrCheckin("sponsor")}
+                    className="bg-bg-base hover:bg-bg-elevated border border-border-subtle p-2.5 rounded text-left flex items-center justify-between transition-all"
+                  >
+                    <span>🎪 Sponsor Booth</span>
+                    <span className="text-brand-gold font-bold">+20p</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* AI Waste Segregation Assistant */}
+              <div className="glass-panel p-4 rounded-md border border-brand-green-light/25 bg-brand-green-deep/5">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Sparkles className="w-4 h-4 text-brand-gold" />
+                  AI Waste Segregation Assistant
+                </h4>
+                <p className="text-text-secondary mt-1 text-[10px]">
+                  Unsure where to discard waste? Ask the AI to route you to the correct recycling station.
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <input 
+                    type="text" 
+                    placeholder="e.g. plastic cup, soda can, hotdog paper" 
+                    value={sortingInput}
+                    onChange={(e) => setSortingInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleWasteSortingCheck()}
+                    className="flex-1 bg-bg-base border border-border-subtle rounded px-3 text-xs text-text-primary focus:outline-none focus:border-brand-gold h-9"
+                  />
+                  <button 
+                    onClick={handleWasteSortingCheck}
+                    className="bg-brand-gold hover:bg-brand-gold/90 text-bg-base px-3.5 rounded text-xs font-bold transition-all"
+                  >
+                    Sort
+                  </button>
+                </div>
+                {sortingOutput && (
+                  <div className="mt-3 p-3 bg-bg-base/60 rounded border border-brand-green-light/20 text-brand-gold font-bold text-[10px]">
+                    {sortingOutput}
+                  </div>
+                )}
+              </div>
+
+              {/* Daily Challenges */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Activity className="w-4 h-4 text-alert-success" />
+                  Daily Sustainability Missions
+                </h4>
+                <div className="space-y-2.5 mt-3">
+                  {(challenges.length > 0 ? challenges : [
+                    { id: "1", title: "Public Transit Commuter", description: "Use subway or shuttle bus to get to MetLife Stadium.", pointsValue: 30 },
+                    { id: "2", title: "Recycling Master", description: "Recycle 0.5kg of waste at a smart bin.", pointsValue: 40 },
+                    { id: "3", title: "Sponsor Booth Explorer", description: "Visit 3 sponsor experience tents.", pointsValue: 50 }
+                  ]).map((chal) => (
+                    <div key={chal.id} className="p-3 bg-bg-base/40 border border-border-subtle rounded flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-text-primary">{chal.title}</p>
+                        <p className="text-text-secondary text-[10px] mt-0.5">{chal.description}</p>
+                      </div>
+                      <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 border border-brand-gold/20 px-2 py-1 rounded">
+                        +{chal.pointsValue}p
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Achievements & Unlocked Badges */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Award className="w-4 h-4 text-brand-gold" />
+                  My Achievement Badges
+                </h4>
+                <div className="flex gap-3 overflow-x-auto py-2.5 mt-1 select-none">
+                  {(ecoBalance.badges.length > 0 ? ecoBalance.badges : [
+                    { title: "Green Champion", icon: "award", description: "Earned 100+ points" },
+                    { title: "Zero Waste Hero", icon: "recycle", description: "Recycled 2kg+ waste" }
+                  ]).map((badge, idx) => (
+                    <div key={idx} className="bg-bg-base/50 border border-border-subtle p-3 rounded text-center shrink-0 w-24">
+                      <div className="w-10 h-10 rounded-full bg-brand-gold/15 flex items-center justify-center mx-auto text-brand-gold border border-brand-gold/30">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <p className="font-bold text-text-primary text-[10px] mt-2 truncate">{badge.title}</p>
+                      <p className="text-[8px] text-text-tertiary mt-0.5 truncate">{badge.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Leaderboard Standings */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Trophy className="w-4 h-4 text-brand-gold" />
+                  Eco Fan Leaderboard Standings
+                </h4>
+                <div className="space-y-2 mt-3 font-mono text-[10px]">
+                  {(leaderboard.length > 0 ? leaderboard : [
+                    { id: "l1", userName: "Amara Diallo", xpPoints: 310, ecoPoints: 160 },
+                    { id: "l2", userName: "Eco Fan", xpPoints: 240, ecoPoints: 120 },
+                    { id: "l3", userName: "John Doe", xpPoints: 190, ecoPoints: 95 }
+                  ]).map((user, idx) => (
+                    <div key={user.id || idx} className="flex justify-between items-center p-2 bg-bg-base/20 border-b border-border-subtle/50">
+                      <span className="flex items-center gap-2">
+                        <span className="font-bold text-brand-gold">#{idx + 1}</span>
+                        <span className="text-text-primary font-sans">{user.userName}</span>
+                      </span>
+                      <span className="text-text-secondary">{user.xpPoints} XP / <span className="text-brand-gold">{user.ecoPoints}p</span></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Concession Vouchers & Rewards Store */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Gift className="w-4 h-4 text-brand-gold" />
+                  Redeem Rewards Store
+                </h4>
+                <div className="space-y-3 mt-3">
+                  {(rewards.length > 0 ? rewards : [
+                    { id: "r1", title: "Free Organic Concession Hotdog", description: "Redeem at Section 112 Concessions.", pointCost: 80 },
+                    { id: "r2", title: "20% Off Merchandise Ticket", description: "Get a 20% discount on official FIFA merch.", pointCost: 150 },
+                    { id: "r3", title: "Free Subway Ride Voucher", description: "Valid for one transit trip.", pointCost: 50 }
+                  ]).map((reward) => (
+                    <div key={reward.id} className="p-3 bg-bg-base/40 border border-border-subtle rounded flex justify-between items-center">
+                      <div className="flex-1 pr-3">
+                        <p className="font-bold text-text-primary">{reward.title}</p>
+                        <p className="text-text-secondary text-[10px] mt-0.5">{reward.description}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleRedeemReward(reward.id, reward.title)}
+                        className="bg-brand-gold hover:bg-brand-gold/90 text-bg-base font-bold text-[10px] px-3 py-1.5 rounded transition-all shrink-0"
+                      >
+                        Redeem ({reward.pointCost}p)
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sustainability Telemetry Impact Metrics */}
+              <div className="glass-panel p-4 rounded-md border border-border-subtle bg-bg-surface">
+                <h4 className="font-outfit font-bold text-xs flex items-center gap-2 text-text-primary">
+                  <Activity className="w-4 h-4 text-brand-gold" />
+                  MetLife Sustainability Live Impact
+                </h4>
+                <div className="grid grid-cols-2 gap-3 mt-3 text-[10px]">
+                  <div className="p-3 bg-bg-base/30 border border-border-subtle rounded">
+                    <p className="text-text-secondary uppercase text-[8px] font-bold">Waste Saved</p>
+                    <p className="text-lg font-outfit font-extrabold text-alert-success mt-1">{metrics.wasteSavedKg.toFixed(1)} kg</p>
+                  </div>
+                  <div className="p-3 bg-bg-base/30 border border-border-subtle rounded">
+                    <p className="text-text-secondary uppercase text-[8px] font-bold">Carbon Offset</p>
+                    <p className="text-lg font-outfit font-extrabold text-alert-info mt-1">{metrics.carbonOffsetKg.toFixed(1)} kg</p>
+                  </div>
+                  <div className="p-3 bg-bg-base/30 border border-border-subtle rounded">
+                    <p className="text-text-secondary uppercase text-[8px] font-bold">Water Refills</p>
+                    <p className="text-lg font-outfit font-extrabold text-brand-gold mt-1">{metrics.waterRefills} Refills</p>
+                  </div>
+                  <div className="p-3 bg-bg-base/30 border border-border-subtle rounded">
+                    <p className="text-text-secondary uppercase text-[8px] font-bold">Transit Rides</p>
+                    <p className="text-lg font-outfit font-extrabold text-text-primary mt-1">{metrics.transitRides} check-ins</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          )}
+
         </div>
 
         {/* Floating Bottom Nav Drawer */}
@@ -501,6 +935,14 @@ export default function App() {
           >
             <MessageSquare className="w-5 h-5" />
             <span>Assistant</span>
+          </button>
+          <button 
+            className={clsx("flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors duration-150", activeTab === "eco" ? "text-brand-gold" : "text-text-secondary")}
+            onClick={() => setActiveTab("eco")}
+            aria-label="Eco Rewards tab"
+          >
+            <Leaf className="w-5 h-5" />
+            <span>Eco Earn</span>
           </button>
           <button 
             className={clsx("flex flex-col items-center gap-1 text-[9px] font-semibold transition-colors duration-150", activeTab === "ticket" ? "text-brand-gold" : "text-text-secondary")}

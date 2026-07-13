@@ -92,6 +92,8 @@ model User {
   assignedTasks     VolunteerTask[]     @relation("AssignedTasks")
   aiConversations   AIConversation[]    @relation("UserConversations")
   escalatedChats    AIConversation[]    @relation("EscalatedConversations")
+  ecoTransactions   EcoPointTransaction[]
+  badges            UserBadge[]
 
   @@map("users")
 }
@@ -250,8 +252,106 @@ model KnowledgeBase {
   id        String   @id @default(uuid()) @db.Uuid
   title     String   @db.VarChar(255)
   content   String   @db.Text
-  embedding Unsupported("vector(384)")?
+  embedding String?  @db.Text
   createdAt DateTime @default(now()) @db.Timestamptz
 
   @@map("knowledge_base")
+}
+
+model EcoPointTransaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  points      Int
+  type        String   // "EARN" or "SPEND"
+  description String   @db.VarChar(255)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("eco_point_transactions")
+}
+
+model Reward {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  pointCost   Int
+  stock       Int
+  code        String   @unique
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@map("rewards")
+}
+
+model Achievement {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  xpReward    Int
+  icon        String   @db.VarChar(50)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  userBadges  UserBadge[]
+
+  @@map("achievements")
+}
+
+model Challenge {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String   @db.VarChar(255)
+  description String   @db.Text
+  pointsValue Int
+  xpValue     Int
+  type        String   // "DAILY" or "MISSION"
+  targetCount Int      @default(1)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@map("challenges")
+}
+
+model Leaderboard {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @unique @db.Uuid
+  userName  String   @db.VarChar(255)
+  xpPoints  Int      @default(0)
+  ecoPoints Int      @default(0)
+  updatedAt DateTime @updatedAt @db.Timestamptz
+
+  @@map("leaderboards")
+}
+
+model RecyclingLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  weightKg    Float
+  wasteType   String   // "plastic", "paper", "can", "glass"
+  pointsEarned Int
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@map("recycling_logs")
+}
+
+model SustainabilityMetric {
+  id         String   @id @default(uuid()) @db.Uuid
+  metricType String   // "waste_saved", "carbon_offset", "water_refills", "transit_rides"
+  value      Float
+  recordedAt DateTime @default(now()) @db.Timestamptz
+
+  @@map("sustainability_metrics")
+}
+
+model UserBadge {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  achievementId String   @db.Uuid
+  earnedAt      DateTime @default(now()) @db.Timestamptz
+
+  user        User        @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_badges")
 }

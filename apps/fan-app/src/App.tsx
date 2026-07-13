@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Home, 
   MapPin, 
@@ -17,7 +17,7 @@ import clsx from "clsx";
 export default function App() {
   const [activeTab, setActiveTab] = useState<"home" | "navigate" | "assistant" | "ticket">("home");
   const [chatMessage, setChatMessage] = useState("");
-  const [chatLogs, setChatLogs] = useState([
+  const [chatLogs, setChatLogs] = useState<{ role: string; text: string }[]>([
     { role: "assistant", text: "Welcome to MetLife Stadium! I am your StadiumIQ AI Assistant. How can I help you today?" }
   ]);
   const [showInspector, setShowInspector] = useState(false);
@@ -328,7 +328,7 @@ export default function App() {
                     min="0" 
                     max="100" 
                     value={walkProgress} 
-                    onChange={(e) => setWalkProgress(Number(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setWalkProgress(Number(e.target.value))}
                     className="w-full accent-brand-gold bg-bg-surface h-1 rounded-full cursor-pointer appearance-none"
                   />
                 </div>
@@ -403,7 +403,7 @@ export default function App() {
 
               {/* Chat Thread */}
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-                {chatLogs.map((msg, index) => (
+                {chatLogs.map((msg: { role: string; text: string }, index: number) => (
                   <div 
                     key={index}
                     className={clsx(

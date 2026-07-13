@@ -5,7 +5,6 @@ import Card from "@/components/Card";
 import { 
   Users, 
   AlertOctagon, 
-  Leaf, 
   Sparkles, 
   Send, 
   Mic, 
@@ -21,6 +20,12 @@ export default function DashboardPage() {
     { id: "INC-13", title: "Elevator 4 malfunction", severity: "medium", status: "assigned", time: "19:28" },
     { id: "INC-14", title: "Smart Bin overflow (Sec 204)", severity: "low", status: "active", time: "19:20" }
   ]);
+
+  const [analytics, setAnalytics] = useState({
+    totalActive: 3,
+    highRisk: 1,
+    categorySummary: "2 medical, 1 infrastructure logs"
+  });
 
   useEffect(() => {
     // Connect to WebSocket gateway
@@ -38,6 +43,9 @@ export default function DashboardPage() {
             time: new Date(payload.incident.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           };
           setIncidentQueue(prev => [formatted, ...prev]);
+          
+          // Re-fetch analytics to keep stats synchronized
+          fetchAnalytics();
         } else if (payload.type === "SAFETY_BROADCAST") {
           // Trigger a modern alert overlay or console log
           alert(`[SAFETY BROADCAST - ${payload.severity.toUpperCase()}] ${payload.title}: ${payload.message}`);
@@ -46,6 +54,23 @@ export default function DashboardPage() {
         console.error("WebSocket message parse error:", err);
       }
     };
+
+    const fetchAnalytics = () => {
+      fetch("http://localhost:3002/api/v1/volunteers/analytics")
+        .then(res => res.json())
+        .then(envelope => {
+          if (envelope.success && envelope.data) {
+            setAnalytics({
+              totalActive: envelope.data.totalActive,
+              highRisk: envelope.data.highRisk,
+              categorySummary: envelope.data.categorySummary
+            });
+          }
+        })
+        .catch(err => console.warn("Analytics fetch fallback loaded:", err.message));
+    };
+
+    fetchAnalytics();
 
     return () => {
       ws.close();
@@ -134,19 +159,26 @@ export default function DashboardPage() {
             <Card title="Active Incidents" isHoverable={false}>
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-outfit font-extrabold text-text-primary">3</span>
-                  <span className="text-xs font-bold text-alert-danger bg-alert-danger/10 px-2 py-0.5 rounded border border-alert-danger/20">HIGH RISK</span>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary">{analytics.totalActive}</span>
+                  <span className={clsx(
+                    "text-xs font-bold px-2 py-0.5 rounded border",
+                    analytics.highRisk > 0 
+                      ? "text-alert-danger bg-alert-danger/10 border-alert-danger/20"
+                      : "text-alert-success bg-alert-success/10 border-alert-success/20"
+                  )}>
+                    {analytics.highRisk > 0 ? "HIGH RISK" : "NORMAL"}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-secondary">
                   <AlertOctagon className="w-4 h-4 text-alert-danger" />
-                  <span>2 medical, 1 infrastructure logs</span>
+                  <span className="truncate max-w-[180px]" title={analytics.categorySummary}>{analytics.categorySummary}</span>
                 </div>
                 <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-alert-danger rounded-full" style={{ width: "60%" }} />
+                  <div className="h-full bg-alert-danger rounded-full" style={{ width: `${Math.min(100, (analytics.totalActive / 10) * 100)}%` }} />
                 </div>
               </div>
             </Card>
-
+ 
             <Card title="Volunteer Activity" isHoverable={false}>
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
@@ -162,19 +194,35 @@ export default function DashboardPage() {
                 </div>
               </div>
             </Card>
-
-            <Card title="Sustainability Load" isHoverable={false}>
-              <div className="space-y-4">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-outfit font-extrabold text-text-primary">1.4 MW</span>
-                  <span className="text-xs font-bold text-alert-info bg-alert-info/10 px-2 py-0.5 rounded border border-alert-info/20">Normal Load</span>
+ 
+            <Card title="Live Gate Queue Wait Times" isHoverable={false}>
+              <div className="space-y-2 text-xs">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-text-primary">Gate A</span>
+                    <span className="text-alert-danger">18.4m wait</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
+                    <div className="h-full bg-alert-danger rounded-full" style={{ width: "92%" }} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-text-secondary">
-                  <Leaf className="w-4 h-4 text-alert-success" />
-                  <span>Waste bin levels: 62% average</span>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-text-primary">Gate B</span>
+                    <span className="text-alert-success">2.4m wait</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
+                    <div className="h-full bg-alert-success rounded-full" style={{ width: "12%" }} />
+                  </div>
                 </div>
-                <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-alert-info rounded-full" style={{ width: "62%" }} />
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-text-primary">Gate C</span>
+                    <span className="text-alert-info">6.1m wait</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
+                    <div className="h-full bg-alert-info rounded-full" style={{ width: "45%" }} />
+                  </div>
                 </div>
               </div>
             </Card>

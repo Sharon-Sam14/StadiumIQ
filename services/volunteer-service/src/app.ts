@@ -5,6 +5,9 @@ import { z } from "zod";
 import { prisma, TaskStatus, IncidentType, Severity, IncidentStatus } from "@stadiumiq/database";
 import { createClient } from "redis";
 import dotenv from "dotenv";
+import http from "http";
+import { WebSocketServer, WebSocket } from "ws";
+import { Kafka } from "kafkajs";
 
 dotenv.config();
 
@@ -28,6 +31,55 @@ redisClient.connect()
   .catch((err) => {
     console.warn("Redis connection failed. Falling back to direct database reads.", err.message);
   });
+
+// 2. Initialize Kafka Client with failover
+const kafkaBroker = process.env.KAFKA_BROKER || "localhost:9092";
+const kafka = new Kafka({
+  clientId: "volunteer-service",
+  brokers: [kafkaBroker]
+});
+const producer = kafka.producer();
+let isKafkaConnected = false;
+
+producer.connect()
+  .then(() => {
+    console.log("Kafka producer connected successfully.");
+    isKafkaConnected = true;
+  })
+  .catch((err) => {
+    console.warn("Failed to connect Kafka producer. Working in local log fallback mode.", err.message);
+  });
+
+// 3. Setup WebSocket Server wrapping HTTP server
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
+const clients = new Set<WebSocket>();
+
+wss.on("connection", (ws) => {
+  clients.add(ws);
+  console.log(`New WebSocket connection established. Total clients: ${clients.size}`);
+  
+  ws.on("close", () => {
+    clients.delete(ws);
+    console.log(`WebSocket client disconnected. Total clients: ${clients.size}`);
+  });
+  
+  // Send welcome confirmation
+  ws.send(JSON.stringify({ type: "WELCOME", message: "Connected to StadiumIQ alerts broker." }));
+});
+
+function broadcastAlert(payload: unknown) {
+  const data = JSON.stringify(payload);
+  for (const client of clients) {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(data);
+      } catch (err) {
+        console.error("WebSocket broadcast error:", err);
+      }
+    }
+  }
+}
 
 // Standard API response envelope helper
 function sendEnvelope(res: Response, data: unknown, cacheHit = false, status = 200) {
@@ -71,9 +123,9 @@ const validate = (schema: z.ZodSchema) => (req: Request, res: Response, next: Ne
   }
 };
 
-// 2. REST Endpoints
+// 4. REST Endpoints
 
-// GET /api/v1/volunteers/tasks (fetches tasks assigned to the volunteer, default to Jake Whitmore for demo)
+// GET /api/v1/volunteers/tasks
 app.get("/api/v1/volunteers/tasks", async (req: Request, res: Response) => {
   try {
     const auth0Id = req.headers["x-user-id"] as string || "auth0|volunteer-jake-456";
@@ -94,12 +146,11 @@ app.get("/api/v1/volunteers/tasks", async (req: Request, res: Response) => {
   }
 });
 
-// Zod schema for task status transition
 const taskStatusSchema = z.object({
   status: z.nativeEnum(TaskStatus),
 });
 
-// PATCH /api/v1/volunteers/tasks/:id (updates a task's status)
+// PATCH /api/v1/volunteers/tasks/:id
 app.patch("/api/v1/volunteers/tasks/:id", validate(taskStatusSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -125,13 +176,12 @@ app.patch("/api/v1/volunteers/tasks/:id", validate(taskStatusSchema), async (req
   }
 });
 
-// GET /api/v1/volunteers/briefing (fetches the AI generated pre-shift brief, cached in Redis)
+// GET /api/v1/volunteers/briefing
 app.get("/api/v1/volunteers/briefing", async (req: Request, res: Response) => {
   try {
     const auth0Id = req.headers["x-user-id"] as string || "auth0|volunteer-jake-456";
     const cacheKey = `briefing:${auth0Id}`;
 
-    // Try reading cache
     if (isRedisConnected) {
       try {
         const cachedBrief = await redisClient.get(cacheKey);
@@ -148,7 +198,6 @@ app.get("/api/v1/volunteers/briefing", async (req: Request, res: Response) => {
       return sendError(res, "USER_NOT_FOUND", "Volunteer profile not found.", {}, 404);
     }
 
-    // Mock an AI briefing structure grounded on database details
     const briefing = {
       volunteerName: user.fullName,
       assignedSection: "Section 200 Concourse",
@@ -159,7 +208,6 @@ app.get("/api/v1/volunteers/briefing", async (req: Request, res: Response) => {
       generatedAt: new Date().toISOString()
     };
 
-    // Cache briefing for 10 minutes
     if (isRedisConnected) {
       try {
         await redisClient.setEx(cacheKey, 600, JSON.stringify(briefing));
@@ -175,7 +223,6 @@ app.get("/api/v1/volunteers/briefing", async (req: Request, res: Response) => {
   }
 });
 
-// Zod schema for incident logging
 const incidentSchema = z.object({
   venueId: z.string().uuid(),
   type: z.nativeEnum(IncidentType),
@@ -184,7 +231,7 @@ const incidentSchema = z.object({
   locationZone: z.string().min(2),
 });
 
-// POST /api/v1/volunteers/incidents (submits an incident report from a volunteer)
+// POST /api/v1/volunteers/incidents
 app.post("/api/v1/volunteers/incidents", validate(incidentSchema), async (req: Request, res: Response) => {
   try {
     const auth0Id = req.headers["x-user-id"] as string || "auth0|volunteer-jake-456";
@@ -208,10 +255,71 @@ app.post("/api/v1/volunteers/incidents", validate(incidentSchema), async (req: R
       },
     });
 
+    // Kafka event publish
+    const incidentEvent = {
+      type: "INCIDENT_CREATED",
+      incident: newIncident,
+      timestamp: new Date().toISOString()
+    };
+    if (isKafkaConnected) {
+      try {
+        await producer.send({
+          topic: "incidents",
+          messages: [{ value: JSON.stringify(incidentEvent) }]
+        });
+      } catch (kafkaErr: any) {
+        console.warn("Kafka incident publishing failed:", kafkaErr.message);
+      }
+    }
+
+    // WebSocket real-time broadcast
+    broadcastAlert(incidentEvent);
+
     return sendEnvelope(res, newIncident, false, 21);
   } catch (error: unknown) {
     console.error("Error creating volunteer incident:", error);
     return sendError(res, "INTERNAL_SERVER_ERROR", "An error occurred submitting the incident.", {}, 500);
+  }
+});
+
+// Zod schema for safety alerts broadcasts
+const broadcastSchema = z.object({
+  title: z.string().min(2),
+  message: z.string().min(5),
+  severity: z.enum(["low", "medium", "high"]),
+});
+
+// POST /api/v1/alerts/broadcast (restricted to managers, broadcasts live safety instructions)
+app.post("/api/v1/alerts/broadcast", validate(broadcastSchema), async (req: Request, res: Response) => {
+  try {
+    const { title, message, severity } = req.body;
+    const alertPayload = {
+      type: "SAFETY_BROADCAST",
+      title,
+      message,
+      severity,
+      timestamp: new Date().toISOString()
+    };
+
+    // Kafka event publish to 'safety-alerts'
+    if (isKafkaConnected) {
+      try {
+        await producer.send({
+          topic: "safety-alerts",
+          messages: [{ value: JSON.stringify(alertPayload) }]
+        });
+      } catch (kafkaErr: any) {
+        console.warn("Kafka safety broadcast publishing failed:", kafkaErr.message);
+      }
+    }
+
+    // WebSocket real-time broadcast
+    broadcastAlert(alertPayload);
+
+    return sendEnvelope(res, { broadcasted: true, alert: alertPayload });
+  } catch (error: unknown) {
+    console.error("Error in safety broadcast:", error);
+    return sendError(res, "INTERNAL_SERVER_ERROR", "An error occurred broadcasting the safety alert.", {}, 500);
   }
 });
 
@@ -221,6 +329,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   return sendError(res, "INTERNAL_SERVER_ERROR", "An unexpected runtime error occurred.", {}, 500);
 });
 
-app.listen(PORT, () => {
+// Listen on HTTP server wrapper which bounds the ws server too
+server.listen(PORT, () => {
   console.log(`Volunteer Service microservice listening on port ${PORT}`);
 });

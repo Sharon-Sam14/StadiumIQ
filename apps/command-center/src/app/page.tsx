@@ -13,13 +13,44 @@ import {
   TrendingUp
 } from "lucide-react";
 import clsx from "clsx";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
-  const alerts = [
+  const [incidentQueue, setIncidentQueue] = useState([
     { id: "INC-12", title: "Crowd surge at Gate A", severity: "high", status: "active", time: "19:30" },
     { id: "INC-13", title: "Elevator 4 malfunction", severity: "medium", status: "assigned", time: "19:28" },
     { id: "INC-14", title: "Smart Bin overflow (Sec 204)", severity: "low", status: "active", time: "19:20" }
-  ];
+  ]);
+
+  useEffect(() => {
+    // Connect to WebSocket gateway
+    const ws = new WebSocket("ws://localhost:3002");
+    
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === "INCIDENT_CREATED") {
+          const formatted = {
+            id: `INC-${payload.incident.id.substring(0, 4).toUpperCase()}`,
+            title: payload.incident.description,
+            severity: payload.incident.severity.toLowerCase(),
+            status: payload.incident.status,
+            time: new Date(payload.incident.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          setIncidentQueue(prev => [formatted, ...prev]);
+        } else if (payload.type === "SAFETY_BROADCAST") {
+          // Trigger a modern alert overlay or console log
+          alert(`[SAFETY BROADCAST - ${payload.severity.toUpperCase()}] ${payload.title}: ${payload.message}`);
+        }
+      } catch (err) {
+        console.error("WebSocket message parse error:", err);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg-base flex" id="dashboard-root">
@@ -166,7 +197,7 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-subtle text-xs">
-                      {alerts.map((alert) => (
+                      {incidentQueue.map((alert) => (
                         <tr key={alert.id} className="hover:bg-bg-surface/10 transition-colors duration-150">
                           <td className="py-3 px-4 font-mono font-semibold text-brand-gold">{alert.id}</td>
                           <td className="py-3 px-4 text-text-primary">{alert.title}</td>

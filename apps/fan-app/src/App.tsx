@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Home, 
   MapPin, 
@@ -21,6 +21,31 @@ export default function App() {
     { role: "assistant", text: "Welcome to MetLife Stadium! I am your StadiumIQ AI Assistant. How can I help you today?" }
   ]);
   const [showInspector, setShowInspector] = useState(false);
+  const [activeBroadcast, setActiveBroadcast] = useState<{ title: string; message: string; severity: string } | null>(null);
+
+  useEffect(() => {
+    // Establish WebSocket alerts connection
+    const ws = new WebSocket("ws://localhost:3002");
+    
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === "SAFETY_BROADCAST") {
+          setActiveBroadcast({
+            title: payload.title,
+            message: payload.message,
+            severity: payload.severity
+          });
+        }
+      } catch (err) {
+        console.error("WebSocket message parsing failed:", err);
+      }
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
@@ -65,6 +90,29 @@ export default function App() {
             </div>
           </div>
         </header>
+
+        {activeBroadcast && (
+          <div className={clsx(
+            "p-3 text-xs text-text-primary flex flex-col gap-1 border-b z-30 sticky top-16",
+            activeBroadcast.severity === "high" && "bg-alert-danger/25 border-alert-danger/45 text-text-primary",
+            activeBroadcast.severity === "medium" && "bg-alert-warning/25 border-alert-warning/45 text-text-primary",
+            activeBroadcast.severity === "low" && "bg-alert-success/25 border-alert-success/45 text-text-primary"
+          )}>
+            <div className="flex justify-between items-center font-bold">
+              <span className="flex items-center gap-1.5 uppercase">
+                <AlertTriangle className="w-3.5 h-3.5 text-brand-gold animate-pulse" />
+                {activeBroadcast.title}
+              </span>
+              <button 
+                onClick={() => setActiveBroadcast(null)}
+                className="text-text-secondary hover:text-text-primary text-[10px] font-bold"
+              >
+                Dismiss
+              </button>
+            </div>
+            <p className="text-text-secondary">{activeBroadcast.message}</p>
+          </div>
+        )}
 
         {/* Content Views */}
         <div className="flex-1 p-4 overflow-y-auto space-y-4">

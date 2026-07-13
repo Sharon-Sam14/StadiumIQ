@@ -16,9 +16,9 @@ This document serves as the persistent state and context memory for the StadiumI
 
 ## 2. Current Progress
 
-- **Current Phase:** Phase 4: Real-time Crowd Intelligence & Prediction Engine (Complete)
-- **Next Milestone:** Phase 5: Real-time Alerts & Notifications
-- **Progress Percentage:** ~70% (FastAPI Crowd Intel service, InfluxDB configurations, background daemon simulator thread, NumPy forecasters, and Docker compose configurations complete and verified)
+- **Current Phase:** Phase 5: Real-time Alerts & Notifications (Complete)
+- **Next Milestone:** Phase 6: Spatial Navigation & BLE Wayfinding
+- **Progress Percentage:** ~80% (Kafka configurations, HTTP-wrapped WebSocket broadcast server setup in volunteer service, React dashboard listeners state tracking, and mobile PWAs alert banners verified)
 
 ---
 
@@ -31,6 +31,7 @@ This document serves as the persistent state and context memory for the StadiumI
 | FEAT-02 | Database & CRUD APIs | Modeled schema.prisma relations, compiled shared database Client, constructed mock seeder script (`npm run db:seed`), and implemented express microservice APIs (Fan, Volunteer, Transport) with validation and Redis caching | 2026-07-13 |
 | FEAT-03 | AI Assistants & Translation | Built FastAPI AI microservice, created pgvector KnowledgeBase schema, wrote cosine similarity retrieval query, implemented LLM prompt workflows, and integrated Speech-to-Text / Text-to-Speech translation placeholders | 2026-07-13 |
 | FEAT-04 | Crowd Intelligence & Forecasts | Set up Python FastAPI crowd-intel-service, integrated InfluxDB connection library, built telemetry simulator loops, implemented 15-minute crowd surge forecasters using NumPy, and verified builds | 2026-07-13 |
+| FEAT-05 | Real-time Alerts & Pub/Sub | Configured Kafka event topics, built HTTP-integrated WebSocket server inside volunteer-service, developed manager-broadcast REST route, and implemented live safety warning banners on dashboard and PWA clients | 2026-07-13 |
 
 ---
 
@@ -135,8 +136,11 @@ List of standard libraries and framework packages to be initialized:
 11. [x] Configure InfluxDB time-series measurements mapping crowd density and gate queue lengths.
 12. [x] Build simulated crowd telemetry data loops.
 13. [x] Implement LSTM-based 15-minute surge prediction networks.
-14. [ ] Set up Kafka topic pipelines for incident events and safety broadcasts.
-15. [ ] Establish WebSocket servers inside Express services for live alert notifications.
+14. [x] Set up Kafka topic pipelines for incident events and safety broadcasts.
+15. [x] Establish WebSocket servers inside Express services for live alert notifications.
+16. [ ] Build custom SVG maps for stadium levels navigation.
+17. [ ] Implement RSSI signal BLE beacon location tracking simulation hooks.
+18. [ ] Display interactive wayfinding routes inside client maps.
 
 ---
 

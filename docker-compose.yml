@@ -226,6 +226,25 @@ services:
     networks:
       - stadiumiq-network
 
+  crowd-intel-service:
+    build:
+      context: ./services/crowd-intel-service
+      dockerfile: Dockerfile
+    container_name: stadiumiq-crowd-intel-service
+    environment:
+      INFLUX_URL: http://influx-db:8086
+      INFLUX_TOKEN: adminsecrettokenkey12345
+      INFLUX_ORG: stadiumiq_org
+      INFLUX_BUCKET: telemetry_bucket
+      PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      influx-db:
+        condition: service_healthy
+    networks:
+      - stadiumiq-network
+
 volumes:
   postgres_data:
   redis_data:

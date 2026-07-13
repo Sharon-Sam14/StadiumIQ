@@ -16,9 +16,9 @@ This document serves as the persistent state and context memory for the StadiumI
 
 ## 2. Current Progress
 
-- **Current Phase:** Phase 3: Conversational AI Assistants & Translation Engine (Complete)
-- **Next Milestone:** Phase 4: Real-time Crowd Intelligence & Prediction Engine
-- **Progress Percentage:** ~55% (FastAPI microservice built, pgvector schema added, cosine similarity query retriever written, LLM prompt orchestrations for Fan/Staff/Manager workflows implemented, voice translation stubs configured, and build verified)
+- **Current Phase:** Phase 4: Real-time Crowd Intelligence & Prediction Engine (Complete)
+- **Next Milestone:** Phase 5: Real-time Alerts & Notifications
+- **Progress Percentage:** ~70% (FastAPI Crowd Intel service, InfluxDB configurations, background daemon simulator thread, NumPy forecasters, and Docker compose configurations complete and verified)
 
 ---
 
@@ -30,6 +30,7 @@ This document serves as the persistent state and context memory for the StadiumI
 | FEAT-01 | Monorepo Setup & Shells | Set up Turborepo workspaces, Docker Compose backends, Kong API gateway routes, and boilerplate shells for Command Center Next.js, Fan Vite PWA, and Volunteer Vite PWA with premium layout grids | 2026-07-13 |
 | FEAT-02 | Database & CRUD APIs | Modeled schema.prisma relations, compiled shared database Client, constructed mock seeder script (`npm run db:seed`), and implemented express microservice APIs (Fan, Volunteer, Transport) with validation and Redis caching | 2026-07-13 |
 | FEAT-03 | AI Assistants & Translation | Built FastAPI AI microservice, created pgvector KnowledgeBase schema, wrote cosine similarity retrieval query, implemented LLM prompt workflows, and integrated Speech-to-Text / Text-to-Speech translation placeholders | 2026-07-13 |
+| FEAT-04 | Crowd Intelligence & Forecasts | Set up Python FastAPI crowd-intel-service, integrated InfluxDB connection library, built telemetry simulator loops, implemented 15-minute crowd surge forecasters using NumPy, and verified builds | 2026-07-13 |
 
 ---
 
@@ -130,10 +131,12 @@ List of standard libraries and framework packages to be initialized:
 7. [x] Build database mock seeding script (`npm run db:seed`).
 8. [x] Instantiate FastAPI microservice for AI & Translation endpoints (`services/ai-service`).
 9. [x] Design local vector database queries using pgvector.
-10. [ ] Set up FastAPI microservice for Crowd Intelligence (`services/crowd-intel-service`).
-11. [ ] Configure InfluxDB time-series measurements mapping crowd density and gate queue lengths.
-12. [ ] Build simulated crowd telemetry data loops.
-13. [ ] Implement LSTM-based 15-minute surge prediction networks.
+10. [x] Set up FastAPI microservice for Crowd Intelligence (`services/crowd-intel-service`).
+11. [x] Configure InfluxDB time-series measurements mapping crowd density and gate queue lengths.
+12. [x] Build simulated crowd telemetry data loops.
+13. [x] Implement LSTM-based 15-minute surge prediction networks.
+14. [ ] Set up Kafka topic pipelines for incident events and safety broadcasts.
+15. [ ] Establish WebSocket servers inside Express services for live alert notifications.
 
 ---
 

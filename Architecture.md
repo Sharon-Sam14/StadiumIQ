@@ -185,6 +185,85 @@ Fan/Volunteer sends query (text or voice)
 | Styling | CSS Modules + TailwindCSS | Utility-first, consistent tokens, isolated web styling |
 | Internationalization | i18next + react-i18next | 50+ language support, lazy-loaded namespaces |
 
+### 3.1.1 Detailed Frontend Features & Client Applications
+
+The platform comprises three distinct frontend client surfaces, each tailored to specific user roles (Fans, Operations Managers, and Volunteers) and connected to the common real-time and generative AI backend pipelines.
+
+#### 1. Fan Web App (PWA)
+* **File Path:** [apps/fan-app/src/App.tsx](file:///c:/Users/sharo/Desktop/promptwar/apps/fan-app/src/App.tsx)
+* **Framework:** React + Vite, packaged as a Progressive Web App (PWA) with Workbox service workers for offline support.
+* **Layout & Navigation:** Floating bottom navigation drawer mapping to five core tabs.
+* **Detailed Tab Features:**
+  * **Home View:**
+    * **Surge Advisories:** Alerts fans to high crowd congestion zones (e.g., Gate A at 92% occupancy) and guides them to alternative routes (e.g., Gate B).
+    * **Digital Ticket Summary:** Displays active ticket metadata (Match 82, Section 212, Row 12, Seat 4) in an interactive card that links directly to the Ticket tab.
+    * **Quick Action Grid:** Hotlinks to Indoor Navigation and the Multilingual AI Concierge.
+  * **Navigate (Indoor Wayfinding) View:**
+    * **Interactive SVG Map:** Renders a schematic layout of MetLife Stadium, detailing boundaries, outer rings, field regions, and gates (e.g., Gate A with red congestion marker, Gate B with green path marker).
+    * **Trilateration Engine:** Estimates user coordinates `(x, y)` in real-time by processing RSSI values from three Bluetooth Low Energy (BLE) beacons (Gate A, Gate B, Section 212). It uses a standard path-loss model to compute distances:
+      $$\text{RSSI} = -20 \log_{10}(\text{distance}) - 30 + \text{noise}$$
+      $$\text{Estimated Distance} = 10^{\frac{-30 - \text{RSSI}}{20}}$$
+      Coordinates are triangulated using a 3-circle intersection matrix:
+      ```typescript
+      const triangulate = (x1, y1, d1, x2, y2, d2, x3, y3, d3) => { ... }
+      ```
+    * **Telemetry Diagnostic Panel:** Displays a matrix of BLE Beacons, raw RSSI (dBm), estimated distances, and the calculated triangulated user position.
+    * **Walk Simulator:** Includes a walk progress slider that updates coordinates along a Bezier curve representing the wayfinding track.
+  * **AI Assistant View:**
+    * **Multilingual Chatbot:** Instant responses regarding stadium directions, food recommendations (e.g., Halal Bites near Section 112), and gate queues.
+    * **GenAI Prompt Inspector:** Allows developers and organizers to view the system prompt template and live retrieved vector contexts (such as pgvector cosine similarity match scores) for hackathon transparency.
+  * **Ticket View:**
+    * **Verified Ticket:** Displays ticket holder's name, seat configuration, and a mock QR/barcode to scan for venue entry.
+  * **Eco Earn (Sustainability & Gamification) View:**
+    * **Eco Metrics Dashboard:** Tracks user's Eco Points and Fan XP level (with a visual level progress bar).
+    * **QR Check-in Simulator:** Simulated scan actions for Public Transit (+30p), Recycling Bins (+50p), Water Refill (+15p), and Sponsor Booths (+20p).
+    * **AI Waste Segregation Assistant:** Uses keyword classification (e.g. plastic bottle, soda can, organic food) to output specific bin routing instructions (Green, Silver, Blue, Brown).
+    * **Gamified Checklist:** Lists daily sustainability missions (e.g., Public Transit Commuter, Recycling Master).
+    * **Leaderboard Standings:** Renders rank standings based on XP and Eco Points.
+    * **Redeem Rewards Store:** Allows users to spend Eco Points on concession vouchers (e.g., free organic concession hotdog, 20% off merch) which generates a scannable voucher QR code.
+    * **Live Impact Telemetry:** Displays stadium-wide live impact metrics (Waste saved in kg, Carbon offset in kg, Water refills, Transit rides checked in).
+* **Real-time WebSockets:** Connected to the backend gateway (`ws://localhost:3002`) to receive real-time high/medium/low severity `SAFETY_BROADCAST` messages which overlay as dismissible banners on top of the viewport.
+
+#### 2. Command Center (Organizer Web Dashboard)
+* **File Path:** [apps/command-center/src/app/page.tsx](file:///c:/Users/sharo/Desktop/promptwar/apps/command-center/src/app/page.tsx)
+* **Framework:** Next.js 14 (App Router) for Server-Side Rendering (SSR) optimized for load speed, styled with TailwindCSS.
+* **Detailed Features:**
+  * **Top Metric Bar:**
+    * **Match Clock:** Display of current match duration (e.g., 74:12).
+    * **Stadium Attendance:** Active vs. Total Capacity ratio progress bar.
+    * **Operations Status:** Live check status of gates (e.g., "All Gates Operational").
+    * **Emergency Switch:** A global trigger button to initiate critical stadium emergency protocol.
+  * **Active Copilot Status:**
+    * Monitored status panel for active LSTM surge forecasting and predictive AI redirection recommendations.
+  * **Core Metrics Cards:**
+    * **Crowd Intelligence:** Visual progress indicator displaying active occupancy (e.g., 92%) and surge status alerts (Orange/Red/Green).
+    * **Active Incidents Counter:** Aggregated count of open logs (e.g., medical, infrastructure) and classification indicators (High Risk/Normal).
+    * **Volunteer Activity:** Shows total checked-in and active volunteers, alongside standby counts.
+    * **Live Queue Wait Times:** Real-time progress trackers for wait times at individual gates (Gate A: 18.4m, Gate B: 2.4m, Gate C: 6.1m).
+  * **Incident Queue Log Table:**
+    * Tabular list showing ID, Description, Severity (High/Medium/Low colored badges), Status (active, assigned, resolved), and timestamp of incidents.
+  * **AI Operations Advisor Panel:**
+    * Dialogue interface with the Operations AI Copilot. Shows sample queries (e.g. tracking Gate A flow slowdowns) and receives structured responses with suggested actions (e.g., "Reroute incoming fans via Gate B", "Open volunteer overflow channels").
+* **Real-time WebSockets:** Receives instant `INCIDENT_CREATED` and `SAFETY_BROADCAST` events from the server gateway. Incoming incidents are prepended dynamically to the Incident Queue Log Table and trigger statistical recalculations.
+
+#### 3. Volunteer Portal / StaffIQ
+* **File Path:** [apps/volunteer-portal/src/App.tsx](file:///c:/Users/sharo/Desktop/promptwar/apps/volunteer-portal/src/App.tsx)
+* **Framework:** React + Vite, designed to run as a lightweight PWA on low-end mobile devices.
+* **Layout & Navigation:** Floating bottom navigation drawer mapping to four tabs.
+* **Detailed Tab Features:**
+  * **Briefing View:**
+    * **AI Shift Briefing:** Pre-shift guidance based on the volunteer's assigned section (e.g. Section 200 Concourse). Synthesizes active gate surges, language profiles (e.g. Wolof/French speakers), and accessibility instructions.
+    * **BLE Position Coordinator:** Logs current grid position using local BLE Beacons for automated check-in and supervisor tracking.
+  * **Tasks View:**
+    * **Checklist Board:** Interactive task cards (e.g., Escort assistance, distributing sustainability flyers) with interactive state toggle (pending $\rightarrow$ in_progress $\rightarrow$ completed).
+    * **Priority Badging:** Highlights High/Low priority tags for critical scheduling.
+  * **SOP Help (Assistant) View:**
+    * **SOP Chatbot:** Standard Operating Procedures assistant helping volunteers lookup manuals regarding lost children, medical aid, and fire safety.
+    * **RAG Prompt Inspector:** Shows SOP context embeddings retrieved from pgvector to verify AI grounding.
+  * **Report Incident View:**
+    * **Logging Form:** Form allowing staff to report incidents directly to the Command Center. Fields include Category (Crowd, Medical, Security, Infrastructure, Lost Item, Other), Severity Level (Low, Medium, High, Critical), and description/location text areas.
+* **Real-time WebSockets:** Subscribes to the broadcast channel to receive and display stadium-wide emergency notifications.
+
 ### 3.2 Backend
 
 | Layer | Technology | Rationale |

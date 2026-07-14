@@ -7,47 +7,54 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Map CSS custom property tokens as Tailwind utilities
         bg: {
-          base: "#080A0C",
-          surface: "#101418",
-          elevated: "#181E24",
-        },
-        brand: {
-          green: {
-            deep: "#0C3A2B",
-            light: "#1E6B52",
-          },
-          gold: {
-            DEFAULT: "#D4AF37",
-            glow: "#F3E5AB",
-          },
-        },
-        alert: {
-          success: "#10B981",
-          warning: "#F59E0B",
-          danger: "#EF4444",
-          info: "#3B82F6",
+          base:     "var(--bg-base)",
+          surface:  "var(--bg-surface)",
+          elevated: "var(--bg-elevated)",
+          overlay:  "var(--bg-overlay)",
         },
         text: {
-          primary: "#F0F4F8",
-          secondary: "#9AA8B6",
-          tertiary: "#627282",
+          primary:   "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          tertiary:  "var(--text-tertiary)",
+        },
+        brand: {
+          gold:       "var(--brand-gold)",
+          navy:       "#001a4e",
+          green:      "#00a651",
+          "green-d":  "var(--brand-green-deep)",
+          "green-l":  "var(--brand-green-light)",
+        },
+        alert: {
+          success: "var(--alert-success)",
+          warning: "var(--alert-warning)",
+          danger:  "var(--alert-danger)",
+          info:    "var(--alert-info)",
+        },
+        border: {
+          subtle: "var(--border-subtle)",
+          strong: "var(--border-strong)",
         },
       },
       fontFamily: {
         outfit: ["Outfit", "sans-serif"],
-        inter: ["Inter", "sans-serif"],
+        inter:  ["Inter",  "sans-serif"],
+        display: ["Outfit", "sans-serif"],
       },
       boxShadow: {
         glass: "inset 0 1px 1px 0 rgba(255, 255, 255, 0.05)",
-        low: "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
-        high: "0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4)",
+        low:   "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
+        high:  "0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.4)",
       },
       borderRadius: {
         xs: "4px",
         sm: "8px",
-        md: "16px",
-        lg: "24px",
+        md: "12px",
+        lg: "20px",
+      },
+      transitionTimingFunction: {
+        "spring": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },

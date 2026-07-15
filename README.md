@@ -1,4 +1,4 @@
-﻿# StadiumIQ 🏟️
+# StadiumIQ 🏟️
 ### GenAI-Powered FIFA World Cup 2026 Operations Platform
 
 > **"To make the FIFA World Cup 2026 the most intelligently operated and inclusively experienced sporting event in human history."**
@@ -96,59 +96,53 @@ promptwar/
 
 ---
 
-## ⚡ Local Quickstart
+## ⚡ Production Quickstart
 
 ### Prerequisites
-- **Node.js** v18.x or later (v20.x recommended)
+- **Node.js** v20.x or later (v22.x recommended)
 - **Docker & Docker Compose**
-- **Python** 3.10+ (optional — for AI service)
 
 ### Step 1: Clone & Configure Environment
 ```bash
 git clone https://github.com/Sharon-Sam14/StadiumIQ.git
 cd StadiumIQ
+cp .env.example .env
+# Edit .env with your Google Gemini API Key and secret values
 ```
 
-Edit `.env`:
-```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/stadiumiq?schema=public"
-REDIS_URL="redis://localhost:6379"
-GEMINI_API_KEY="your_gemini_api_key_here"
-```
-
-### Step 2: Start Infrastructure
+### Step 2: Build & Start the Docker Compose Stack
+Compile all TypeScript workspaces and build the container stack:
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
+On startup, `stadiumiq-db-init` will automatically push the schema to PostgreSQL, seed initial data fixtures (default users, challenges, rewards), and compile the prisma engine.
 
-### Step 3: Install Dependencies
+Verify that all 12 services show as `(healthy)`:
 ```bash
-npm install
+docker compose ps
 ```
 
-### Step 4: Database Setup
+---
+
+## 🧪 Testing and CI/CD
+
+StadiumIQ contains a complete automated integration and unit test suite targeting critical paths, game calculations, BLE indoor navigation algorithms, and API endpoints.
+
+To run all lint checks and test suites across the monorepo:
 ```bash
-npx prisma generate --schema=packages/database/prisma/schema.prisma
-npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
-npm run db:seed --workspace=@stadiumiq/database
+# Run lint check
+npm run lint
+
+# Run all tests (75/75 passing)
+npm run test
 ```
 
-### Step 5: Launch Dev Servers
-```bash
-npm run dev
-```
-
-| App | URL |
-|-----|-----|
-| Command Center | http://localhost:3000 |
-| Fan PWA | http://localhost:5173 |
-| Volunteer Portal | http://localhost:5174 |
-
-### Step 6: Build All Packages
-```bash
-npx turbo run build
-# Expected: 7 successful, 7 total — 0 TypeScript errors
-```
+### GitHub Actions CI/CD Pipeline
+Every push or pull request to the `main` branch triggers the [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml) automated pipeline, which executes:
+1. **Linter gating check** (`eslint` verification)
+2. **Automated unit and integration tests** (`vitest` + `supertest`)
+3. **TypeScript workspace compiling** (`tsc`)
+4. **Docker Compose building** (`docker compose build`)
 
 ---
 
@@ -158,7 +152,7 @@ npx turbo run build
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/fans/me` | Retrieve logged-in fan profile |
-| GET | `/api/v1/fans/tickets` | Retrieve active digital tickets |
+| GET | `/api/v1/fans/tickets` | Retrieve active digital tickets (cached) |
 | POST | `/api/v1/fans/incidents` | Submit a fan incident report |
 
 ### Volunteer Service (port 3002)
@@ -203,9 +197,9 @@ npx turbo run build
 | Layer | Technology |
 |-------|------------|
 | **Frontend** | React 18, Vite 5, Next.js 14, TailwindCSS 3, Lucide React |
-| **Backend** | Node.js 20, Express 4, TypeScript 5 |
+| **Backend** | Node.js 20, Express 4, TypeScript 5 (modular layered architecture) |
 | **AI** | Python 3.11, FastAPI, Google Gemini SDK, pgvector (RAG) |
-| **Database** | PostgreSQL 16, Prisma ORM 5, Redis 7 |
+| **Database** | PostgreSQL 16 (with pgvector), Prisma ORM 5, Redis 7 (caching) |
 | **Messaging** | Apache Kafka, WebSockets (ws library) |
 | **Infrastructure** | Docker Compose, Kong API Gateway, InfluxDB, Turborepo |
 | **PWA** | vite-plugin-pwa, Service Workers, Web App Manifest |
@@ -240,17 +234,27 @@ The Fan PWA **Eco Earn** tab delivers a complete green gamification loop:
 
 ---
 
-## 📄 Documentation Index
+## 📄 Operations Manuals & Documentation Index
 
 | Document | Purpose |
 |----------|---------|
-| [PRD.md](./PRD.md) | Full product requirements, user stories, and success metrics |
-| [Architecture.md](./Architecture.md) | System architecture, service boundaries, and data flows |
-| [Phases.md](./Phases.md) | 8-phase implementation roadmap |
-| [Design.md](./Design.md) | UI/UX design tokens, palette, typography, component patterns |
-| [Memory.md](./Memory.md) | Developer session memory and progress tracking |
-| [Rules.md](./Rules.md) | Strict code standards, patterns, and architectural rules |
+| **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** | Production topology & deployment lifecycle overview |
+| **[BACKEND_DEPLOYMENT.md](./BACKEND_DEPLOYMENT.md)** | backend VM configuration, reverse proxy setup, SSL, log rotation, and backups |
+| **[FRONTEND_DEPLOYMENT.md](./FRONTEND_DEPLOYMENT.md)** | Vercel deployment and CI/CD pipelines |
+| **[ORACLE_CLOUD_SETUP.md](./ORACLE_CLOUD_SETUP.md)** | Oracle Cloud VM setup, VCN creation, and firewall Security Lists configuration |
+| **[VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)** | Custom domains configuration and DNS setups |
+| **[ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)** | Full templates and list of required keys for all microservices |
+| **[PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md)** | Pre-flight security and auditing checklist |
+| **[SECURITY_GUIDE.md](./SECURITY_GUIDE.md)** | OWASP Hardening alignment, non-root users execution, Helmet configuration |
+| **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** | Mock test setup parameters and testing index references |
+| **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** | REST endpoint schemas and WebSocket event specs |
+| **[PRD.md](./PRD.md)** | Full product requirements, user stories, and success metrics |
+| **[Architecture.md](./Architecture.md)** | System architecture, service boundaries, and data flows |
+| **[Phases.md](./Phases.md)** | 8-phase implementation roadmap |
+| **[Design.md](./Design.md)** | UI/UX design tokens, palette, typography, component patterns |
+| **[Memory.md](./Memory.md)** | Developer session memory and progress tracking |
+| **[Rules.md](./Rules.md)** | Strict code standards, patterns, and architectural rules |
 
 ---
 
-*StadiumIQ v1.0.0 — Built for the FIFA World Cup 2026 Hackathon | All 8 Phases Complete ✅*
+*StadiumIQ v1.1.0 — Enterprise Production Grade Upgrade Complete ✅*

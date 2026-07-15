@@ -1,47 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { collection, onSnapshot, query, limit } from "firebase/firestore";
+import { db } from "@/utils/firebase";
 import { WebSocketEventSchema, type WebSocketEvent } from "@/types/events";
-
-// ============================================================
-// SIMULATED WEBSOCKET HOOK
-// Uses setInterval to simulate real-time events.
-// All events validated with Zod before reaching state.
-// ============================================================
-
-const SAFETY_BROADCASTS = [
-  {
-    title: "Gate A Congestion Advisory",
-    message: "Gate A occupancy has reached 92%. All Section 200–250 ticketholders are advised to use Gate B for faster entry.",
-    severity: "high" as const,
-  },
-  {
-    title: "Stadium Weather Update",
-    message: "Light rain expected at 21:00. East concourse entry doors have been opened for shelter.",
-    severity: "medium" as const,
-  },
-  {
-    title: "Transport Advisory",
-    message: "NJ Transit special service running 15 min ahead of schedule post-match. Board at Meadowlands Station.",
-    severity: "low" as const,
-  },
-];
-
-const INCIDENT_EVENTS = [
-  {
-    description: "Fan reported feeling unwell near Section 110, medical team dispatched",
-    category: "medical" as const,
-    zone: "Section 110",
-  },
-  {
-    description: "Unauthorised access attempt detected at Staff Entrance B",
-    category: "security" as const,
-    zone: "Staff Entrance B",
-  },
-  {
-    description: "Concourse 3 food vendor queue exceeding safe capacity",
-    category: "crowd" as const,
-    zone: "Concourse 3",
-  },
-];
 
 interface UseWebSocketOptions {
   onSafetyBroadcast?: (event: WebSocketEvent & { type: "SAFETY_BROADCAST" }) => void;
@@ -55,16 +15,8 @@ interface UseWebSocketReturn {
   lastEvent: WebSocketEvent | null;
 }
 
-let broadcastIndex = 0;
-let incidentIndex = 0;
-
 export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
-  const {
-    onSafetyBroadcast,
-    onIncidentCreated,
-    broadcastIntervalMs = 45000,
-    incidentIntervalMs = 75000,
-  } = options;
+  const { onSafetyBroadcast, onIncidentCreated } = options;
 
   const [isConnected, setIsConnected] = useState(false);
   const [lastEvent, setLastEvent] = useState<WebSocketEvent | null>(null);
@@ -78,7 +30,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const dispatchEvent = useCallback((rawPayload: unknown): void => {
     const parseResult = WebSocketEventSchema.safeParse(rawPayload);
     if (!parseResult.success) {
-      console.warn("[WebSocket] Malformed event discarded:", parseResult.error.issues);
+      console.warn("[WebSocket/Firestore] Malformed event discarded:", parseResult.error.issues);
       return;
     }
     const event = parseResult.data;
@@ -91,50 +43,55 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     }
   }, []);
 
+  // Listen to firestore incidents collection for real-time creation broadcasts
   useEffect(() => {
-    // Simulate connection established
-    const connectTimer = setTimeout(() => setIsConnected(true), 500);
+    setIsConnected(true);
 
-    // Safety broadcast interval
-    const broadcastTimer = setInterval(() => {
-      const template = SAFETY_BROADCASTS[broadcastIndex % SAFETY_BROADCASTS.length];
-      broadcastIndex++;
-      dispatchEvent({
-        type: "SAFETY_BROADCAST",
-        id: `BC-${Date.now()}`,
-        title: template.title,
-        message: template.message,
-        severity: template.severity,
-        timestamp: new Date().toISOString(),
+    const q = query(collection(db, "incidents"), limit(5));
+    const unsub = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const data = change.doc.data();
+          dispatchEvent({
+            type: "INCIDENT_CREATED",
+            incident: {
+              id: change.doc.id,
+              description: data.description || "Active incident reported",
+              category: data.category || "other",
+              severity: data.severity || "medium",
+              status: data.status || "active",
+              zone: data.zone || "General",
+              reportedBy: data.reportedBy || "fan",
+              createdAt: data.createdAt || new Date().toISOString()
+            }
+          });
+        }
       });
-    }, broadcastIntervalMs);
+    });
 
-    // Incident created interval
-    const incidentTimer = setInterval(() => {
-      const template = INCIDENT_EVENTS[incidentIndex % INCIDENT_EVENTS.length];
-      incidentIndex++;
-      dispatchEvent({
-        type: "INCIDENT_CREATED",
-        incident: {
-          id: `INC-${Date.now().toString(36).toUpperCase()}`,
-          description: template.description,
-          category: template.category,
-          severity: "medium",
-          status: "active",
-          zone: template.zone,
-          reportedBy: "system",
-          createdAt: new Date().toISOString(),
-        },
+    // Also listen to sustainability metrics for price drop state updates
+    const unsubMetrics = onSnapshot(collection(db, "sustainability_metrics"), (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        const data = change.doc.data();
+        if (change.doc.id === "price_drop_state" && data.priceDropActive) {
+          dispatchEvent({
+            type: "SAFETY_BROADCAST",
+            id: `BC-${Date.now()}`,
+            title: "⚡ Concession Price Drop Alert",
+            message: data.message || "Surplus organic hotdogs cost reduced by 50%!",
+            severity: "medium",
+            timestamp: new Date().toISOString()
+          });
+        }
       });
-    }, incidentIntervalMs);
+    });
 
     return () => {
-      clearTimeout(connectTimer);
-      clearInterval(broadcastTimer);
-      clearInterval(incidentTimer);
+      unsub();
+      unsubMetrics();
       setIsConnected(false);
     };
-  }, [broadcastIntervalMs, incidentIntervalMs, dispatchEvent]);
+  }, [dispatchEvent]);
 
   return { isConnected, lastEvent };
 }

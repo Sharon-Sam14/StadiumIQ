@@ -364,27 +364,31 @@ function ReportIncidentTab({ incidentHook }: { incidentHook: UseIncidentsReturn 
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = useCallback((e: React.FormEvent): void => {
+  const handleSubmit = useCallback(async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!validate()) return;
 
     const sanitizedDescription = sanitizeInput(form.description, 500);
     const sanitizedZone = sanitizeInput(form.zone, 100);
 
-    const newIncident = addIncident({
-      description: sanitizedDescription,
-      category: form.category,
-      severity: form.severity,
-      zone: sanitizedZone,
-      reportedBy: "volunteer",
-    });
+    try {
+      const newIncident = await addIncident({
+        description: sanitizedDescription,
+        category: form.category,
+        severity: form.severity,
+        zone: sanitizedZone,
+        reportedBy: "volunteer",
+      });
 
-    setSubmittedId(newIncident.id);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setForm({ description: "", category: "crowd", severity: "medium", zone: "" });
-    }, 4000);
+      setSubmittedId(newIncident.id);
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setForm({ description: "", category: "crowd", severity: "medium", zone: "" });
+      }, 4000);
+    } catch (err) {
+      console.error("Failed to submit incident:", err);
+    }
   }, [form, addIncident]);
 
   return (

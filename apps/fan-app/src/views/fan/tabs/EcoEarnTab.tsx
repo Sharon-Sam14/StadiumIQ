@@ -12,32 +12,34 @@ import { calcTreeEquivalence, getXPLevel, getXPProgress } from "@/utils/formatte
 import { GoalCelebration } from "@/components/animations/GoalCelebration";
 import type { EcoTransaction } from "@/types/fan";
 import type { UseEcoPointsReturn } from "@/hooks/useEcoPoints";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/utils/firebase";
 
 // ============================================================
 // ECO EARN TAB — Sustainability & Gamification
 // ============================================================
 
 const ECO_MISSIONS = [
-  { id: "mission-1", title: "Public Transit Commuter",  description: "Arrive via subway or shuttle bus.", points: 30 },
-  { id: "mission-2", title: "Recycling Master",         description: "Recycle at a smart bin station.",   points: 50 },
-  { id: "mission-3", title: "Hydration Station Hero",   description: "Refill at a water station.",         points: 15 },
-  { id: "mission-4", title: "Sponsor Explorer",         description: "Visit 2+ sponsor experience tents.", points: 40 },
-  { id: "mission-5", title: "Zero Plastic Pledge",      description: "Skip single-use plastic today.",     points: 25 },
+  { id: "mission-1", title: "Public Transit Commuter", description: "Arrive via subway or shuttle bus.", points: 30 },
+  { id: "mission-2", title: "Recycling Master", description: "Recycle at a smart bin station.", points: 50 },
+  { id: "mission-3", title: "Hydration Station Hero", description: "Refill at a water station.", points: 15 },
+  { id: "mission-4", title: "Sponsor Explorer", description: "Visit 2+ sponsor experience tents.", points: 40 },
+  { id: "mission-5", title: "Zero Plastic Pledge", description: "Skip single-use plastic today.", points: 25 },
 ];
 
 const ECO_REWARDS = [
-  { id: "r1", title: "Free Organic Concession Hotdog",  description: "Redeem at Section 112 Concessions.",       pointCost: 80  },
-  { id: "r2", title: "20% Off Merchandise Voucher",     description: "20% off at any official FIFA merch store.", pointCost: 150 },
-  { id: "r3", title: "Free NJ Transit Ride",            description: "Valid for one post-match train ride.",       pointCost: 50  },
-  { id: "r4", title: "VIP Eco Lounge Access",           description: "30-min access to the Green Zone Lounge.",   pointCost: 200 },
+  { id: "r1", title: "Free Organic Concession Hotdog", description: "Redeem at Section 112 Concessions.", pointCost: 80 },
+  { id: "r2", title: "20% Off Merchandise Voucher", description: "20% off at any official FIFA merch store.", pointCost: 150 },
+  { id: "r3", title: "Free NJ Transit Ride", description: "Valid for one post-match train ride.", pointCost: 50 },
+  { id: "r4", title: "VIP Eco Lounge Access", description: "30-min access to the Green Zone Lounge.", pointCost: 200 },
 ];
 
 const LEADERBOARD = [
-  { rank: 1, name: "Amara Diallo",       country: "SEN", ecoPoints: 420, fanXP: 840  },
-  { rank: 2, name: "Ji-Ho Kim",          country: "KOR", ecoPoints: 385, fanXP: 770  },
-  { rank: 3, name: "Carlos Mendes",      country: "BRA", ecoPoints: 310, fanXP: 620  },
-  { rank: 4, name: "Fatima Al-Rashidi",  country: "MAR", ecoPoints: 275, fanXP: 550  },
-  { rank: 5, name: "Lena Müller",        country: "GER", ecoPoints: 240, fanXP: 480  },
+  { rank: 1, name: "Amara Diallo", country: "SEN", ecoPoints: 420, fanXP: 840 },
+  { rank: 2, name: "Ji-Ho Kim", country: "KOR", ecoPoints: 385, fanXP: 770 },
+  { rank: 3, name: "Carlos Mendes", country: "BRA", ecoPoints: 310, fanXP: 620 },
+  { rank: 4, name: "Fatima Al-Rashidi", country: "MAR", ecoPoints: 275, fanXP: 550 },
+  { rank: 5, name: "Lena Müller", country: "GER", ecoPoints: 240, fanXP: 480 },
 ];
 
 const LIVE_METRICS = {
@@ -48,10 +50,10 @@ const LIVE_METRICS = {
 };
 
 const ACTION_TYPES: { type: EcoTransaction["type"]; label: string; points: number; icon: string }[] = [
-  { type: "transit",       label: "Public Transit",  points: 30, icon: "🚇" },
-  { type: "recycling",     label: "Recycling Bin",   points: 50, icon: "♻" },
-  { type: "water_refill",  label: "Water Refill",    points: 15, icon: "💧" },
-  { type: "sponsor_booth", label: "Sponsor Booth",   points: 20, icon: "★" },
+  { type: "transit", label: "Public Transit", points: 30, icon: "🚇" },
+  { type: "recycling", label: "Recycling Bin", points: 50, icon: "♻" },
+  { type: "water_refill", label: "Water Refill", points: 15, icon: "💧" },
+  { type: "sponsor_booth", label: "Sponsor Booth", points: 20, icon: "★" },
 ];
 
 interface EcoEarnTabProps {
@@ -68,6 +70,7 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
   const [checkinFeedback, setCheckinFeedback] = useState<string | null>(null);
   const [liveMetrics, setLiveMetrics] = useState(LIVE_METRICS);
   const [celebrationActive, setCelebrationActive] = useState(false);
+  const [priceDropActive, setPriceDropActive] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1200);
@@ -78,9 +81,9 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveMetrics((prev) => ({
-        wasteSavedKg:    parseFloat((prev.wasteSavedKg + Math.random() * 0.8).toFixed(1)),
-        carbonOffsetKg:  parseFloat((prev.carbonOffsetKg + Math.random() * 1.2).toFixed(1)),
-        waterRefills:    prev.waterRefills + Math.floor(Math.random() * 3),
+        wasteSavedKg: parseFloat((prev.wasteSavedKg + Math.random() * 0.8).toFixed(1)),
+        carbonOffsetKg: parseFloat((prev.carbonOffsetKg + Math.random() * 1.2).toFixed(1)),
+        waterRefills: prev.waterRefills + Math.floor(Math.random() * 3),
         transitCheckins: prev.transitCheckins + Math.floor(Math.random() * 2),
       }));
     }, 8000);
@@ -155,6 +158,47 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
           {checkinFeedback}
         </div>
       )}
+
+      {/* GenAI Dynamic Pricing Simulation Controls */}
+      <Card title="GenAI Concessions Pricing Simulator">
+        <div className="space-y-3">
+          <p className="text-[10px] text-[var(--text-tertiary)]">
+            Simulate a background GenAI telemetry agent monitoring concession overstock risks. Turning on the simulator issues a PRICE_DROP directive to lower points cost and redirect event traffic.
+          </p>
+          <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-elevated)]/50 border border-[var(--border-subtle)]">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">
+              Simulate Concession Overstock (AI Price Drop)
+            </span>
+            <button
+              onClick={async () => {
+                const nextState = !priceDropActive;
+                setPriceDropActive(nextState);
+                try {
+                  const callOptimiser = httpsCallable(functions, "autonomicConcessionOptimiser");
+                  await callOptimiser({ overstockAlert: nextState });
+                } catch (err) {
+                  console.error("AI Price Drop error:", err);
+                }
+              }}
+              className={`px-4 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                priceDropActive
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-[var(--brand-gold)] text-black hover:opacity-90"
+              }`}
+            >
+              {priceDropActive ? "STOP SIMULATOR" : "START SIMULATOR"}
+            </button>
+          </div>
+          {priceDropActive && (
+            <div className="rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-3 text-[11px] font-semibold text-red-400 animate-pulse flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping shrink-0" />
+              <span>
+                <strong>⚡ AI PRICE_DROP Directive Active:</strong> MetLife Stadium Section 112 organic hotdog inventory surplus detected. Points cost optimized by 50% (80p → 40p) to reduce food waste!
+              </span>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Voucher Modal */}
       {activeVoucher && (
@@ -322,11 +366,10 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
             return (
               <label
                 key={mission.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
-                  completed
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${completed
                     ? "border-green-500/30 bg-green-900/15 opacity-70"
                     : "border-[var(--border-subtle)] hover:border-[var(--border-strong)]"
-                }`}
+                  }`}
               >
                 <input
                   type="checkbox"
@@ -357,13 +400,11 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
           {LEADERBOARD.map((entry) => (
             <div
               key={entry.rank}
-              className={`flex items-center gap-3 p-2.5 rounded-lg ${
-                entry.name === "Carlos Mendes" ? "bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20" : "bg-[var(--bg-elevated)]/50"
-              }`}
+              className={`flex items-center gap-3 p-2.5 rounded-lg ${entry.name === "Carlos Mendes" ? "bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20" : "bg-[var(--bg-elevated)]/50"
+                }`}
             >
-              <span className={`font-display font-black text-sm w-5 text-center ${
-                entry.rank === 1 ? "text-[var(--brand-gold)]" : "text-[var(--text-tertiary)]"
-              }`}>
+              <span className={`font-display font-black text-sm w-5 text-center ${entry.rank === 1 ? "text-[var(--brand-gold)]" : "text-[var(--text-tertiary)]"
+                }`}>
                 #{entry.rank}
               </span>
               <div className="flex-1 min-w-0">
@@ -386,7 +427,9 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       <Card title="Redeem Rewards Store" headerRight={<span className="text-xs text-[var(--brand-gold)] font-bold">{balance.ecoPoints} pts available</span>}>
         <div className="space-y-3">
           {ECO_REWARDS.map((reward) => {
-            const canAfford = balance.ecoPoints >= reward.pointCost;
+            const isOrganicHotdog = reward.id === "r1";
+            const actualCost = (isOrganicHotdog && priceDropActive) ? 40 : reward.pointCost;
+            const canAfford = balance.ecoPoints >= actualCost;
             return (
               <div
                 key={reward.id}
@@ -398,12 +441,12 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
                   <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{reward.description}</p>
                 </div>
                 <button
-                  onClick={() => handleRedeemReward(reward.id, reward.title, reward.pointCost)}
+                  onClick={() => handleRedeemReward(reward.id, reward.title, actualCost)}
                   disabled={!canAfford}
                   className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--brand-gold)] text-black font-bold text-[10px] disabled:opacity-35 disabled:cursor-not-allowed hover:opacity-90 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-gold)]"
-                  aria-label={`Redeem ${reward.title} for ${reward.pointCost} Eco Points${!canAfford ? " (insufficient points)" : ""}`}
+                  aria-label={`Redeem ${reward.title} for ${actualCost} Eco Points${!canAfford ? " (insufficient points)" : ""}`}
                 >
-                  {reward.pointCost}p
+                  {actualCost}p
                 </button>
               </div>
             );
@@ -415,10 +458,10 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       <Card title="MetLife Stadium Live Impact" headerRight={<AIBadge label="AI-Estimated" />}>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Waste Saved",     value: `${liveMetrics.wasteSavedKg.toFixed(1)} kg`,   color: "text-green-400" },
-            { label: "Carbon Offset",   value: `${liveMetrics.carbonOffsetKg.toFixed(1)} kg`,  color: "text-blue-400" },
-            { label: "Water Refills",   value: liveMetrics.waterRefills.toLocaleString(),       color: "text-cyan-400" },
-            { label: "Transit Rides",   value: liveMetrics.transitCheckins.toLocaleString(),   color: "text-[var(--text-primary)]" },
+            { label: "Waste Saved", value: `${liveMetrics.wasteSavedKg.toFixed(1)} kg`, color: "text-green-400" },
+            { label: "Carbon Offset", value: `${liveMetrics.carbonOffsetKg.toFixed(1)} kg`, color: "text-blue-400" },
+            { label: "Water Refills", value: liveMetrics.waterRefills.toLocaleString(), color: "text-cyan-400" },
+            { label: "Transit Rides", value: liveMetrics.transitCheckins.toLocaleString(), color: "text-[var(--text-primary)]" },
           ].map(({ label, value, color }) => (
             <div key={label} className="p-3 bg-[var(--bg-elevated)] rounded-lg">
               <p className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold mb-1">{label}</p>

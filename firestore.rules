@@ -1,0 +1,155 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function: check if user is logged in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function: get user data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Helper function: check if user has a specific role
+    function hasRole(role) {
+      return isSignedIn() && (
+        request.auth.token.role == role || 
+        getUserData().role == role
+      );
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (request.auth.uid == userId || hasRole('fifa_admin'));
+    }
+
+    // Venues Collection
+    match /venues/{venueId} {
+      allow read: if true;
+      allow write: if hasRole('fifa_admin') || hasRole('venue_manager');
+    }
+
+    // Matches Collection
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if hasRole('fifa_admin') || hasRole('venue_manager');
+    }
+
+    // Tickets Collection
+    match /tickets/{ticketId} {
+      allow read: if isSignedIn() && (
+        resource.data.fanId == request.auth.uid || 
+        hasRole('fifa_admin') || 
+        hasRole('volunteer') || 
+        hasRole('staff')
+      );
+      allow write: if hasRole('fifa_admin');
+    }
+
+    // Incidents Collection
+    match /incidents/{incidentId} {
+      allow read: if isSignedIn() && (
+        resource.data.reportedBy == request.auth.uid || 
+        hasRole('fifa_admin') || 
+        hasRole('venue_manager') || 
+        hasRole('volunteer') || 
+        hasRole('staff')
+      );
+      allow create: if isSignedIn();
+      allow update, delete: if hasRole('fifa_admin') || hasRole('venue_manager') || hasRole('staff');
+    }
+
+    // Volunteer Tasks Collection
+    match /volunteer_tasks/{taskId} {
+      allow read: if isSignedIn() && (
+        resource.data.volunteerId == request.auth.uid || 
+        hasRole('fifa_admin') || 
+        hasRole('venue_manager') || 
+        hasRole('staff')
+      );
+      allow write: if hasRole('fifa_admin') || hasRole('venue_manager') || hasRole('staff') || (
+        isSignedIn() && resource.data.volunteerId == request.auth.uid
+      );
+    }
+
+    // AI Conversations Collection
+    match /ai_conversations/{convId} {
+      allow read, write: if isSignedIn() && (
+        resource == null || 
+        resource.data.userId == request.auth.uid || 
+        hasRole('fifa_admin')
+      );
+    }
+
+    // Sustainability Events
+    match /sustainability_events/{eventId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Knowledge Base
+    match /knowledge_base/{docId} {
+      allow read: if isSignedIn();
+      allow write: if hasRole('fifa_admin');
+    }
+
+    // Eco Point Transactions
+    match /eco_point_transactions/{txId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasRole('fifa_admin')
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if hasRole('fifa_admin');
+    }
+
+    // Rewards
+    match /rewards/{rewardId} {
+      allow read: if true;
+      allow write: if hasRole('fifa_admin');
+    }
+
+    // Achievements
+    match /achievements/{achId} {
+      allow read: if true;
+      allow write: if hasRole('fifa_admin');
+    }
+
+    // Challenges
+    match /challenges/{challengeId} {
+      allow read: if true;
+      allow write: if hasRole('fifa_admin');
+    }
+
+    // Leaderboards
+    match /leaderboards/{leaderId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Recycling Logs
+    match /recycling_logs/{logId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasRole('fifa_admin')
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if hasRole('fifa_admin');
+    }
+
+    // Sustainability Metrics
+    match /sustainability_metrics/{metricId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // User Badges
+    match /user_badges/{badgeId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if hasRole('fifa_admin');
+    }
+  }
+}

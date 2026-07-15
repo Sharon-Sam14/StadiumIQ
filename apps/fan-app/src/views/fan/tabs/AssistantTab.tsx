@@ -5,6 +5,8 @@ import { LoadingDots } from "@/components/ui/Skeleton";
 import { sanitizeInput } from "@/utils/sanitize";
 import { generateId } from "@/utils/formatters";
 import type { Language, ChatMessage } from "@/types/fan";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/utils/firebase";
 
 // ============================================================
 // ASSISTANT TAB — Multilingual AI Concierge
@@ -145,19 +147,34 @@ export const AssistantTab = React.memo(function AssistantTab(): React.JSX.Elemen
     setInputText("");
     setIsTyping(true);
 
-    // Simulate AI response delay
-    setTimeout(() => {
-      const reply = getResponse(language, sanitized);
-      const aiMsg: ChatMessage = {
-        id: generateId("msg"),
-        role: "assistant",
-        text: reply,
-        language,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 700 + Math.random() * 600);
+    const callAiConcierge = httpsCallable(functions, "aiConcierge");
+    callAiConcierge({ prompt: sanitized, sessionId: "session-pwa-fan" })
+      .then((result: any) => {
+        const reply = result.data?.text || "I'm sorry, I couldn't process your request.";
+        const aiMsg: ChatMessage = {
+          id: generateId("msg"),
+          role: "assistant",
+          text: reply,
+          language,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      })
+      .catch((error) => {
+        console.error("AI Concierge error:", error);
+        const reply = getResponse(language, sanitized);
+        const aiMsg: ChatMessage = {
+          id: generateId("msg"),
+          role: "assistant",
+          text: reply + " (Offline Fallback)",
+          language,
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      })
+      .finally(() => {
+        setIsTyping(false);
+      });
   }, [inputText, isSendDisabled, language]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>): void => {

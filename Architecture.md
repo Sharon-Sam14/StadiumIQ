@@ -1,40 +1,64 @@
-# StadiumIQ System Architecture
+# Technical Architecture Documentation — StadiumIQ
 
-This document describes the serverless, decoupled architecture of StadiumIQ.
-
----
-
-## 1. High-Level Topology
-
-StadiumIQ uses a managed serverless architecture to reduce self-hosted operating costs and scale dynamically to meet the needs of high-concurrency event crowds.
+## 1. High-Level Architecture
+StadiumIQ is built as a serverless, decoupled monorepo stack. The frontends are hosted on **Vercel** and connect directly to **Google Firebase** managed backends.
 
 ```mermaid
 graph TD
-  User((Client PWA)) -->|Firebase Auth| Auth[Firebase Authentication]
-  User -->|Realtime Subscriptions| Firestore[(Cloud Firestore)]
-  User -->|REST / AI Triggers| Functions[Firebase Cloud Functions]
-  Functions -->|Gemini SDK| Gemini[Google AI Gemini API]
+  FanClient[Fan PWA - Vite] -->|Realtime snapshots| Firestore[(Cloud Firestore)]
+  VolunteerClient[Volunteer Portal - Vite] -->|Write Incidents| Firestore
+  ManagerClient[Command Center - NextJS] -->|Analytics / Alerts| Firestore
+
+  FanClient -->|Callable request| CloudFunc[Firebase Cloud Functions]
+  CloudFunc -->|Gemini API| Gemini[Google AI Gemini Flash]
 ```
 
-### Key Components:
-1. **Frontend Portals (Vercel)**:
-   - **Fan Portal (PWA)**: Mobile-optimized client for digital tickets, spatial BLE navigation, waste segregation, and rewards redemptions.
-   - **Volunteer Portal**: Operational checklist and incident reporting surface.
-   - **Command Center**: Real-time incident analytics and safety alerts dashboard.
-2. **Serverless Backing Services (Firebase)**:
-   - **Cloud Firestore**: Real-time NoSQL document persistence and sync.
-   - **Cloud Functions**: Typescript handlers managing AI chats, incident queries, and pricing simulations.
-   - **Firebase Authentication**: Secures write/update requests on all portals.
+---
+
+## 2. Folder Structure
+
+```text
+promptwar/
+├── apps/
+│   ├── command-center/         # Next.js 14 Operations Dashboard
+│   ├── fan-app/                # Vite React Fan PWA
+│   └── volunteer-portal/       # Vite React Volunteer Portal
+├── packages/
+│   ├── tsconfig/               # Shared tsconfig Presets
+│   └── eslint-config/          # Shared ESLint Presets
+├── functions/                  # Serverless Node backend handlers
+├── firebase.json               # Emulators and functions declarations
+├── firestore.rules             # Collection rules
+└── storage.rules               # Asset storage security
+```
 
 ---
 
-## 2. Spatial Navigation & Positioning
-The Fan PWA incorporates a Bluetooth Low Energy (BLE) positioning solver:
-* **Distance Solver**: Uses an RSSI path-loss formula to estimate fan distances to beacons.
-* **Coordinate Triangulation**: Implements 2D trilateration math equations resolved via Cramer's rule to pinpoint user coordinate maps.
+## 3. Database Design & Firestore Collections
+
+* **`users`**: Auth account details.
+* **`venues`**: Match stadium geographical coordinates.
+* **`matches`**: Kickoff schedules and attendances.
+* **`tickets`**: Gate section and barcode values.
+* **`incidents`**: Location, severity, reported status.
+* **`leaderboards`**: User points, transactions log, badges.
+* **`rewards`**: Redeemable concessions store inventory.
 
 ---
 
-## 3. Generative AI Integration
-- **RAG Concierge**: Executes prompts using fallback rules for MetLife Stadium bag guidelines, transit station maps, and security options.
-- **Security Scopes**: Handled via Cloud Functions, ensuring that Google Gemini API keys are never exposed to client-side bundles.
+## 4. Authentication Flow
+```mermaid
+sequenceClient -> Server (Firebase Auth)
+  Client ->> Auth: SignIn(Email, Password)
+  Auth -->> Client: Return JWT session token
+  Client ->> Firestore: Read/Write with context.auth
+```
+
+---
+
+## 5. State Management & Component Hierarchy
+* **State Management**: Uses standard React `useState`, `useReducer`, and `useContext` hooks. Context listeners hook into Firestore paths (`useIncidents`, `useEcoPoints`, `useWebSocket`) for automatic client-side updates.
+* **Component Hierarchies**:
+  - Fan App: `App` -> `MainTabs` -> [`EcoEarnTab` | `NavigationTab` | `AssistantTab` | `TicketTab`].
+  - Volunteer Portal: `VolunteerPortal` -> [`IncidentForm` | `TaskChecklist` | `BriefingPanel`].
+  - Command Center: `page.tsx` -> [`MetricsOverview` | `SurgeForecast` | `PricingConsole`].

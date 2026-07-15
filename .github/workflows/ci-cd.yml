@@ -21,9 +21,7 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: |
-          rm -f package-lock.json
-          npm install
+        run: npm install
 
       - name: Run Lint checks
         run: npm run lint

@@ -1304,10 +1304,10 @@ function FanTabTicket({ isDark, isAccess: _isAccess }: { readonly isDark: boolea
         </div>
 
         <div className="space-y-1 font-mono text-xs text-left">
-          <div className="flex justify-between"><span>Match:</span><span className="font-bold text-white">Group Stage - Match 82</span></div>
-          <div className="flex justify-between"><span>Venue:</span><span className="font-bold text-white">MetLife Stadium</span></div>
-          <div className="flex justify-between"><span>Section:</span><span className="font-bold text-white">212</span></div>
-          <div className="flex justify-between"><span>Row / Seat:</span><span className="font-bold text-white">12 / 4</span></div>
+          <div className="flex justify-between"><span>Match:</span><span className="font-bold text-slate-900 dark:text-white">Group Stage - Match 82</span></div>
+          <div className="flex justify-between"><span>Venue:</span><span className="font-bold text-slate-900 dark:text-white">MetLife Stadium</span></div>
+          <div className="flex justify-between"><span>Section:</span><span className="font-bold text-slate-900 dark:text-white">212</span></div>
+          <div className="flex justify-between"><span>Row / Seat:</span><span className="font-bold text-slate-900 dark:text-white">12 / 4</span></div>
           <div className="flex justify-between"><span>Entry Gate:</span><span className="font-bold text-[#e8c84a]">Gate B</span></div>
         </div>
 

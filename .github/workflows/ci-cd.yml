@@ -21,7 +21,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install --no-save @rolldown/binding-linux-x64-gnu @rollup/rollup-linux-x64-gnu
 
       - name: Run Lint checks
         run: npm run lint

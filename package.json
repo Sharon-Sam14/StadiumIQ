@@ -27,9 +27,5 @@
     "eslint-plugin-import": "^2.32.0",
     "prettier": "^3.2.5",
     "turbo": "^2.0.4"
-  },
-  "optionalDependencies": {
-    "@rolldown/binding-linux-x64-gnu": "1.1.5",
-    "@rolldown/binding-linux-x64-musl": "1.1.5"
   }
 }

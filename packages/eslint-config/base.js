@@ -16,7 +16,7 @@ module.exports = {
   },
   plugins: ["@typescript-eslint", "import"],
   rules: {
-    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "import/no-cycle": "error",

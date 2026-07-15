@@ -140,7 +140,6 @@ export default function App() {
   const handleSubmitReport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reportForm.description.trim()) return;
-    console.log("Submitting incident:", reportForm);
     alert(`Incident logged successfully! Reference ID: INC-${Math.floor(Math.random() * 900) + 100}`);
     setReportForm({ description: "", severity: "medium", type: "crowd" });
   };

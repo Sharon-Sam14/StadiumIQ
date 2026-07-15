@@ -85,6 +85,7 @@ services:
       - discovery.type=single-node
       - plugins.security.disabled=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=K3p$9!wQz7*vM2xP
     ports:
       - "9200:9200"
       - "9600:9600"
@@ -132,7 +133,7 @@ services:
       - stadiumiq-network
 
   api-gateway:
-    image: kong:3.4-alpine
+    image: kong:3.4
     container_name: stadiumiq-gateway
     environment:
       KONG_DATABASE: "off"
@@ -148,10 +149,10 @@ services:
     volumes:
       - ./services/api-gateway:/usr/local/kong/declarative
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8000 || exit 1"]
-      interval: 5s
+      test: ["CMD", "kong", "health"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
     networks:
       - stadiumiq-network
 
@@ -171,6 +172,13 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - stadiumiq-network
 
@@ -190,6 +198,13 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3002/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - stadiumiq-network
 
@@ -206,6 +221,11 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3003/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - stadiumiq-network
 
@@ -218,11 +238,14 @@ services:
       DATABASE_URL: postgresql://admin:adminpassword@postgres-db:5432/stadiumiq?schema=public
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       PORT: 8000
-    ports:
-      - "8000:8000"
     depends_on:
       postgres-db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     networks:
       - stadiumiq-network
 
@@ -241,6 +264,26 @@ services:
       - "8002:8002"
     depends_on:
       influx-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - stadiumiq-network
+
+  db-init:
+    build:
+      context: .
+      dockerfile: services/fan-service/Dockerfile
+    container_name: stadiumiq-db-init
+    environment:
+      DATABASE_URL: postgresql://admin:adminpassword@postgres-db:5432/stadiumiq?schema=public
+    command: >
+      sh -c "npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss && node packages/database/dist/seed.js"
+    depends_on:
+      postgres-db:
         condition: service_healthy
     networks:
       - stadiumiq-network

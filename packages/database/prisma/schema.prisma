@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 enum Role {
@@ -318,6 +319,8 @@ model Leaderboard {
   ecoPoints Int      @default(0)
   updatedAt DateTime @updatedAt @db.Timestamptz
 
+  @@index([xpPoints])
+  @@index([ecoPoints])
   @@map("leaderboards")
 }
 

@@ -146,7 +146,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col items-center justify-start pb-20 select-none">
+    <div id="main-content" className="min-h-screen bg-bg-base text-text-primary flex flex-col items-center justify-start pb-20 select-none">
       {/* Target device container for mobile preview representation */}
       <div className="w-full max-w-[480px] min-h-screen flex flex-col bg-bg-surface/20 border-x border-border-subtle relative">
         

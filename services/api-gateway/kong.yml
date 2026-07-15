@@ -9,6 +9,7 @@ services:
         paths:
           - /api/v1/fans
           - /api/v1/tickets
+        strip_path: false
   - name: volunteer-service
     url: http://volunteer-service:3002
     routes:
@@ -16,24 +17,28 @@ services:
         paths:
           - /api/v1/volunteers
           - /api/v1/tasks
+        strip_path: false
   - name: transport-service
     url: http://transport-service:3003
     routes:
       - name: transport-routes
         paths:
           - /api/v1/transport
+        strip_path: false
   - name: ai-service
     url: http://ai-service:8000
     routes:
       - name: ai-routes
         paths:
           - /api/v1/ai
+        strip_path: false
   - name: navigation-service
     url: http://navigation-service:8080
     routes:
       - name: navigation-routes
         paths:
           - /api/v1/navigation
+        strip_path: false
 
 plugins:
   - name: cors

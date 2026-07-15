@@ -556,7 +556,7 @@ export function App() {
   const isAccess = state.isAccessibilityMode;
 
   return (
-    <div className={`stadiumiq-root min-h-screen relative overflow-hidden flex flex-col ${
+    <div id="main-content" className={`stadiumiq-root min-h-screen relative overflow-hidden flex flex-col ${
       isAccess ? 'bg-black text-white text-lg font-bold' : isDark ? 'bg-[#070b16] text-[#f3f6fa]' : 'bg-[#f0f4fa] text-[#0f1a30]'
     }`}>
       <style>{CSS_STYLES}</style>

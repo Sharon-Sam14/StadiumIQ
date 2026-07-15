@@ -7,8 +7,13 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2022",
-    "rootDir": "src"
+    "rootDir": "src",
+    "skipLibCheck": true
   },
   "compileOnSave": true,
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "lib"
+  ]
 }

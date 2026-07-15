@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { VolunteerPortal } from "@/views/volunteer/VolunteerPortal";
 import type { UseIncidentsReturn } from "@/hooks/useIncidents";
@@ -73,7 +73,9 @@ describe("Report Incident Form Integration Test", () => {
     );
 
     // Assert success screen is displayed
-    expect(screen.getByText(/incident reported/i)).toBeInTheDocument();
-    expect(screen.getByText(/INC-TEST/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/incident reported/i)).toBeInTheDocument();
+      expect(screen.getByText(/INC-TEST/)).toBeInTheDocument();
+    });
   });
 });

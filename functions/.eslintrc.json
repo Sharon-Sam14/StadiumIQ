@@ -1,0 +1,4 @@
+{
+  "extends": "@stadiumiq/eslint-config",
+  "ignorePatterns": ["lib", "node_modules"]
+}

@@ -200,9 +200,18 @@ You need to create your local env file to compile the applications.
 
 See the complete steps detailed in **[VERCEL_SETUP.md](./VERCEL_SETUP.md)** to import the monorepo, set build/output paths, add your env vars, and deploy each app:
 
-1. **Fan Portal**: Set root to `apps/fan-app`. Framework preset: Vite.
-2. **Volunteer Portal**: Set root to `apps/volunteer-portal`. Framework preset: Vite.
-3. **Command Center**: Set root to `apps/command-center`. Framework preset: Next.js.
+1. **Fan Portal PWA**:
+   - **Root Directory**: `apps/fan-app`
+   - **Build Command**: `npx turbo run build --filter=@stadiumiq/fan-app`
+   - **Output Directory**: `dist`
+2. **Volunteer Portal**:
+   - **Root Directory**: `apps/volunteer-portal`
+   - **Build Command**: `npx turbo run build --filter=@stadiumiq/volunteer-portal`
+   - **Output Directory**: `dist`
+3. **Operations Command Center**:
+   - **Root Directory**: `apps/command-center`
+   - **Build Command**: `npx turbo run build --filter=@stadiumiq/command-center`
+   - **Output Directory**: `.next`
 
 ---
 

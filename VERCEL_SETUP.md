@@ -45,7 +45,7 @@ Ensure your repository is pushed to a private or public GitHub repository.
    - **Framework Preset**: Select **Vite**.
    - **Root Directory**: Click _Edit_ and select **`apps/fan-app`**, then click _Continue_.
    - **Build and Output Settings**:
-     - Build Command: `npm run build`
+     - Build Command: `npx turbo run build --filter=@stadiumiq/fan-app`
      - Output Directory: `dist`
    - **Environment Variables**: Add your Firebase configuration keys (see [ENVIRONMENT_VARIABLES.md](./ENVIRONMENT_VARIABLES.md)):
      - `VITE_FIREBASE_API_KEY`
@@ -65,7 +65,7 @@ Ensure your repository is pushed to a private or public GitHub repository.
    - **Framework Preset**: Select **Vite**.
    - **Root Directory**: Click _Edit_ and select **`apps/volunteer-portal`**, then click _Continue_.
    - **Build and Output Settings**:
-     - Build Command: `npm run build`
+     - Build Command: `npx turbo run build --filter=@stadiumiq/volunteer-portal`
      - Output Directory: `dist`
    - **Environment Variables**: Add the same set of `VITE_FIREBASE_*` credentials.
 4. Click **Deploy**.
@@ -79,7 +79,7 @@ Ensure your repository is pushed to a private or public GitHub repository.
    - **Framework Preset**: Select **Next.js** (Next.js 14 App Router project).
    - **Root Directory**: Click _Edit_ and select **`apps/command-center`**, then click _Continue_.
    - **Build and Output Settings**:
-     - Build Command: `npm run build`
+     - Build Command: `npx turbo run build --filter=@stadiumiq/command-center`
      - Output Directory: `.next`
    - **Environment Variables**: Add the same set of `VITE_FIREBASE_*` credentials.
 4. Click **Deploy**.

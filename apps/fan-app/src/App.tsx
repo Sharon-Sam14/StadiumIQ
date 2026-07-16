@@ -469,7 +469,7 @@ function SkeletonDisplayGrid({ isDark }: { isDark: boolean }) {
 export function App() {
   const [state, dispatch] = useReducer(appReducer, {
     role: 'onboarding',
-    isDarkMode: false,
+    isDarkMode: true,
     isAccessibilityMode: false,
     ecoPoints: 120,
     xpLevel: 2,
@@ -520,13 +520,8 @@ export function App() {
     return () => clearInterval(wsInterval);
   }, []);
 
-  // Theme Synchronizations matching standard role defaults
+  // Role transition tab reset effect
   useEffect(() => {
-    if (state.role === 'organizer') {
-      if (!state.isDarkMode) dispatch({ type: 'TOGGLE_DARK_MODE' });
-    } else {
-      if (state.isDarkMode) dispatch({ type: 'TOGGLE_DARK_MODE' });
-    }
     setActiveTab(state.role === 'volunteer' ? 'briefing' : 'home');
   }, [state.role]);
 
@@ -551,9 +546,9 @@ export function App() {
     }, 600);
   }, []);
 
-  // Shared theme contexts configuration sets
-  const isDark = state.isDarkMode && !state.isAccessibilityMode;
-  const isAccess = state.isAccessibilityMode;
+  // Shared theme contexts configuration sets - Dark Mode Only
+  const isDark = true;
+  const isAccess = false;
 
   return (
     <div id="main-content" className={`stadiumiq-root min-h-screen relative overflow-hidden flex flex-col ${
@@ -635,26 +630,6 @@ export function App() {
               </div>
             )}
 
-            {/* Universal Mode Switch Toggles */}
-            <button
-              onClick={() => dispatch({ type: 'TOGGLE_DARK_MODE' })}
-              className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded text-xs transition-colors"
-              aria-label="Toggle Adaptive System Contrast Theme Mode"
-            >
-              {state.isDarkMode ? '☀️ Light' : '🌙 Dark'}
-            </button>
-
-            <button
-              onClick={() => dispatch({ type: 'TOGGLE_ACCESSIBILITY' })}
-              className={`p-1.5 border rounded text-xs font-bold transition-all ${
-                isAccess 
-                  ? 'bg-[#e8c84a] text-black border-black ring-2 ring-white' 
-                  : 'bg-slate-900 hover:bg-slate-800 border-slate-700 text-white'
-              }`}
-              aria-label="Toggle High-Contrast Large Text Mode"
-            >
-              ♿ {isAccess ? 'Standard Font' : 'High Contrast'}
-            </button>
           </div>
         </div>
 

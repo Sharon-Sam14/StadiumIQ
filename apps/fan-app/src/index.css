@@ -48,48 +48,7 @@
   --transition-slow: 350ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ============================================================
-   LIGHT MODE — soft ice-blue and premium gold-navy gradients
-   ============================================================ */
-[data-theme="light"] {
-  --bg-base: #F0F4FA;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #E3ECF7;
-  --bg-overlay: rgba(240, 244, 250, 0.94);
 
-  --text-primary: #0F1A30;
-  --text-secondary: #485A7E;
-  --text-tertiary: #7D8FA9;
-
-  --border-subtle: rgba(15, 26, 48, 0.08);
-  --border-strong: rgba(15, 26, 48, 0.15);
-
-  --brand-gold: #C59A1A;
-  --brand-gold-glow: rgba(197, 154, 26, 0.12);
-  --brand-green-deep: #D1EBE1;
-  --brand-green-light: #008740;
-}
-
-/* ============================================================
-   HIGH CONTRAST ACCESSIBILITY MODE
-   ============================================================ */
-[data-accessibility="high-contrast"] {
-  --bg-base: #000000;
-  --bg-surface: #000000;
-  --bg-elevated: #111111;
-  --text-primary: #FFFFFF;
-  --text-secondary: #FFFFFF;
-  --text-tertiary: #CCCCCC;
-  --border-subtle: rgba(255, 255, 255, 0.3);
-  --border-strong: rgba(255, 255, 255, 0.6);
-  --brand-gold: #FFD700;
-  --font-base: 18px;
-}
-
-[data-accessibility="high-contrast"] *:focus-visible {
-  outline: 3px solid #FFD700 !important;
-  outline-offset: 3px !important;
-}
 
 /* ============================================================
    BASE STYLES
@@ -136,10 +95,6 @@ body {
   border: 1px solid var(--border-subtle);
 }
 
-[data-theme="light"] .glass {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-}
 
 .glass-strong {
   background: rgba(16, 20, 24, 0.92);
@@ -148,10 +103,6 @@ body {
   border: 1px solid var(--border-strong);
 }
 
-[data-theme="light"] .glass-strong {
-  background: rgba(7, 11, 22, 0.94);
-  border-color: rgba(255, 255, 255, 0.08);
-}
 
 /* Hybrid Header Contrast: Force light text and controls in headers/nav-bars */
 header, 

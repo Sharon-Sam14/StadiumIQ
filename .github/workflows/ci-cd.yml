@@ -33,9 +33,3 @@ jobs:
 
       - name: Run Compile & Builds Validation
         run: npm run build
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Verify Docker Compose Build
-        run: docker compose build

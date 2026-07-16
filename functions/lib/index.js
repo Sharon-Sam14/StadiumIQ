@@ -6,7 +6,10 @@ const admin = require("firebase-admin");
 const generative_ai_1 = require("@google/generative-ai");
 admin.initializeApp();
 const db = admin.firestore();
-// 1. Database Seeding Function
+/**
+ * HTTP endpoint that seeds the Cloud Firestore database with initial mock fixtures
+ * including venues, matches, default users, sustainability challenges, rewards, and tickets.
+ */
 exports.seedFirestore = (0, https_1.onRequest)(async (req, res) => {
     // Access control
     res.set("Access-Control-Allow-Origin", "*");
@@ -158,10 +161,17 @@ exports.seedFirestore = (0, https_1.onRequest)(async (req, res) => {
         });
     }
     catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ success: false, error: message });
     }
 });
-// 2. AI Concierge Gemini SDK RAG Router
+/**
+ * Callable function that queries the Gemini 1.5 Flash model with custom stadium operational context.
+ * Resolves query guidelines regarding prohibited items, transportation, and accessibility.
+ *
+ * @param request.data.prompt - The query string from the user.
+ * @param request.data.sessionId - The active session identifier.
+ */
 exports.aiConcierge = (0, https_1.onCall)(async (request) => {
     const { prompt, sessionId } = request.data;
     if (!prompt) {
@@ -193,10 +203,14 @@ exports.aiConcierge = (0, https_1.onCall)(async (request) => {
         return { success: true, text };
     }
     catch (error) {
-        throw new https_1.HttpsError("internal", error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new https_1.HttpsError("internal", message);
     }
 });
-// 3. Incident Analytics Aggregator
+/**
+ * Callable function that aggregates volunteer reports / incidents by type, severity, and status.
+ * Calculates total active incidents.
+ */
 exports.getVolunteerAnalytics = (0, https_1.onCall)(async () => {
     try {
         const querySnapshot = await db.collection("incidents").get();
@@ -206,18 +220,20 @@ exports.getVolunteerAnalytics = (0, https_1.onCall)(async () => {
         const severities = {};
         const statuses = {};
         incidents.forEach((inc) => {
-            if (inc.type)
+            if (inc.type) {
                 types[inc.type] = (types[inc.type] || 0) + 1;
-            if (inc.severity)
+            }
+            if (inc.severity) {
                 severities[inc.severity] = (severities[inc.severity] || 0) + 1;
-            if (inc.status)
+            }
+            if (inc.status) {
                 statuses[inc.status] = (statuses[inc.status] || 0) + 1;
+            }
         });
         return {
             success: true,
             data: {
-                totalActive: incidents.filter((inc) => inc.status !== "resolved")
-                    .length,
+                totalActive: incidents.filter((inc) => inc.status !== "resolved").length,
                 types,
                 severities,
                 statuses,
@@ -225,10 +241,16 @@ exports.getVolunteerAnalytics = (0, https_1.onCall)(async () => {
         };
     }
     catch (error) {
-        throw new https_1.HttpsError("internal", error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new https_1.HttpsError("internal", message);
     }
 });
-// 4. Concession Price Optimisation Agent
+/**
+ * Callable function that updates concession rewards (like organic hotdog point costs)
+ * dynamically based on surplus overstock alert status.
+ *
+ * @param request.data.overstockAlert - Boolean indicating if an overstock pricing model should trigger.
+ */
 exports.autonomicConcessionOptimiser = (0, https_1.onCall)(async (request) => {
     const { overstockAlert } = request.data;
     try {
@@ -253,7 +275,8 @@ exports.autonomicConcessionOptimiser = (0, https_1.onCall)(async (request) => {
         return { success: true, pointCost: currentCost };
     }
     catch (error) {
-        throw new https_1.HttpsError("internal", error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new https_1.HttpsError("internal", message);
     }
 });
 //# sourceMappingURL=index.js.map

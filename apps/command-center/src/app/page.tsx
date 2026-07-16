@@ -14,6 +14,15 @@ import {
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
+interface AnalyticsResponse {
+  success: boolean;
+  data?: {
+    totalActive: number;
+    highRisk: number;
+    categorySummary: string;
+  };
+}
+
 export default function DashboardPage() {
   const [incidentQueue, setIncidentQueue] = useState([
     {
@@ -73,14 +82,15 @@ export default function DashboardPage() {
             `[SAFETY BROADCAST - ${payload.severity.toUpperCase()}] ${payload.title}: ${payload.message}`,
           );
         }
-      } catch (err) {
-        console.error("WebSocket message parse error:", err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("WebSocket message parse error:", msg);
       }
     };
 
     const fetchAnalytics = () => {
       fetch("http://localhost:3002/api/v1/volunteers/analytics")
-        .then((res) => res.json())
+        .then((res) => res.json() as Promise<AnalyticsResponse>)
         .then((envelope) => {
           if (envelope.success && envelope.data) {
             setAnalytics({
@@ -90,9 +100,10 @@ export default function DashboardPage() {
             });
           }
         })
-        .catch((err) =>
-          console.warn("Analytics fetch fallback loaded:", err.message),
-        );
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.warn("Analytics fetch fallback loaded:", msg);
+        });
     };
 
     fetchAnalytics();

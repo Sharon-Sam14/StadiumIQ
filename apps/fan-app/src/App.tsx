@@ -166,7 +166,16 @@ type Action =
   | { type: "CLEAR_INCIDENT_FLASH"; payload: string }
   | {
       type: "TOGGLE_TASK";
-      payload: { id: string; status: "pending" | "in_progress" | "completed" };
+      payload: {
+        id: string;
+        status:
+          | "pending"
+          | "in_progress"
+          | "completed"
+          | "Pending"
+          | "In Progress"
+          | "Completed";
+      };
     }
   | { type: "RECEIVE_BROADCAST"; payload: string };
 
@@ -242,15 +251,20 @@ function appReducer(state: AppState, action: Action): AppState {
           inc.id === action.payload ? { ...inc, isNew: false } : inc,
         ),
       };
-    case "TOGGLE_TASK":
+    case "TOGGLE_TASK": {
+      const rawStatus = action.payload.status;
+      const normalizedStatus = (rawStatus === "In Progress"
+        ? "in_progress"
+        : rawStatus.toLowerCase()) as "pending" | "in_progress" | "completed";
       return {
         ...state,
         tasks: state.tasks.map((task) =>
           task.id === action.payload.id
-            ? { ...task, status: action.payload.status }
+            ? { ...task, status: normalizedStatus }
             : task,
         ),
       };
+    }
     case "RECEIVE_BROADCAST":
       return { ...state, lastBroadcast: action.payload };
     default:
@@ -1815,10 +1829,36 @@ function FanTabAi({
     setInputVal("");
   };
 
+  interface SpeechRecognitionInstance {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    start: () => void;
+    onresult: (event: SpeechEvent) => void;
+    onerror: () => void;
+    onend: () => void;
+  }
+
+  interface WindowWithSpeech extends Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+
+  interface SpeechEvent {
+    results: {
+      [index: number]: {
+        [index: number]: {
+          transcript: string;
+        };
+      };
+    };
+  }
+
   const handleSpeechInput = () => {
+    const windowWithSpeech = window as unknown as WindowWithSpeech;
     const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition;
+      windowWithSpeech.SpeechRecognition ||
+      windowWithSpeech.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       alert(
         "Voice recognition is not supported in this browser environment. Recommend Chrome/Edge.",
@@ -1842,7 +1882,7 @@ function FanTabAi({
     setIsListening(true);
     recognition.start();
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechEvent) => {
       const speechText = event.results[0][0].transcript;
       setInputVal(speechText);
       setIsListening(false);
@@ -2418,7 +2458,16 @@ function CommandCenterView({
     // Modify status dispatch directly
     dispatch({
       type: "TOGGLE_TASK",
-      payload: { id, status: newStatus as any },
+      payload: {
+        id,
+        status: newStatus as
+          | "pending"
+          | "in_progress"
+          | "completed"
+          | "Pending"
+          | "In Progress"
+          | "Completed",
+      },
     });
   };
 

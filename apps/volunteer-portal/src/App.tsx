@@ -146,8 +146,9 @@ export default function App() {
             severity: payload.severity,
           });
         }
-      } catch (err) {
-        console.error("WebSocket message parsing failed:", err);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("WebSocket message parsing failed:", msg);
       }
     };
 
@@ -156,6 +157,11 @@ export default function App() {
     };
   }, []);
 
+  /**
+   * Toggles the status of a volunteer checklist task between pending, in progress, and completed.
+   *
+   * @param id - Task unique numeric identifier
+   */
   const handleToggleTask = (id: number) => {
     setTasks((prev) =>
       prev.map((t) => {
@@ -173,6 +179,9 @@ export default function App() {
     );
   };
 
+  /**
+   * Sends volunteer query message to the mock SOP assistant and triggers automated protocol replies.
+   */
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
     const userMsg = chatMessage;
@@ -199,6 +208,9 @@ export default function App() {
     }, 700);
   };
 
+  /**
+   * Submits an incident report form logging it to the command center.
+   */
   const handleSubmitReport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reportForm.description.trim()) return;

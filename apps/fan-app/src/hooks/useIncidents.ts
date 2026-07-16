@@ -25,6 +25,13 @@ export interface UseIncidentsReturn {
   dispatch: React.Dispatch<IncidentAction>;
 }
 
+/**
+ * React hook that manages safety incidents in real-time, syncing safety incident records
+ * directly from Cloud Firestore collections. Handles status updates, severity upgrades,
+ * and incident logging dispatches.
+ *
+ * @returns State and setter callback boundaries for incident coordination.
+ */
 export function useIncidents(): UseIncidentsReturn {
   const [incidents, setIncidents] = useState<Incident[]>([]);
 

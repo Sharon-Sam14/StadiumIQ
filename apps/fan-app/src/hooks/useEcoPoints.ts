@@ -28,6 +28,13 @@ const ECO_POINTS_TABLE: Record<
   sponsor_booth: { points: 40, xp: 80 },
 };
 
+/**
+ * React hook that manages sustainability points transactions and standings in real-time,
+ * syncing records directly from the database leaderboard entries. Handles actions like
+ * public transit commuting, smart waste bin scanning, and concessions rewards redemption.
+ *
+ * @returns State and transaction dispatch triggers for eco gamification.
+ */
 export function useEcoPoints(): UseEcoPointsReturn {
   const userId = "auth0-fan-priya-789"; // Default logged-in user profile id
   const [balance, setBalance] = useState<EcoBalance>({

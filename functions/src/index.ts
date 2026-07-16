@@ -5,7 +5,10 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 admin.initializeApp();
 const db = admin.firestore();
 
-// 1. Database Seeding Function
+/**
+ * HTTP endpoint that seeds the Cloud Firestore database with initial mock fixtures
+ * including venues, matches, default users, sustainability challenges, rewards, and tickets.
+ */
 export const seedFirestore = onRequest(async (req, res) => {
   // Access control
   res.set("Access-Control-Allow-Origin", "*");
@@ -165,12 +168,19 @@ export const seedFirestore = onRequest(async (req, res) => {
       success: true,
       message: "Firestore database successfully seeded!",
     });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    res.status(500).json({ success: false, error: message });
   }
 });
 
-// 2. AI Concierge Gemini SDK RAG Router
+/**
+ * Callable function that queries the Gemini 1.5 Flash model with custom stadium operational context.
+ * Resolves query guidelines regarding prohibited items, transportation, and accessibility.
+ *
+ * @param request.data.prompt - The query string from the user.
+ * @param request.data.sessionId - The active session identifier.
+ */
 export const aiConcierge = onCall(async (request) => {
   const { prompt, sessionId } = request.data;
   if (!prompt) {
@@ -212,12 +222,16 @@ export const aiConcierge = onCall(async (request) => {
     const text = response.response.text();
 
     return { success: true, text };
-  } catch (error: any) {
-    throw new HttpsError("internal", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new HttpsError("internal", message);
   }
 });
 
-// 3. Incident Analytics Aggregator
+/**
+ * Callable function that aggregates volunteer reports / incidents by type, severity, and status.
+ * Calculates total active incidents.
+ */
 export const getVolunteerAnalytics = onCall(async () => {
   try {
     const querySnapshot = await db.collection("incidents").get();
@@ -229,28 +243,38 @@ export const getVolunteerAnalytics = onCall(async () => {
     const statuses: Record<string, number> = {};
 
     incidents.forEach((inc) => {
-      if (inc.type) types[inc.type] = (types[inc.type] || 0) + 1;
-      if (inc.severity)
+      if (inc.type) {
+        types[inc.type] = (types[inc.type] || 0) + 1;
+      }
+      if (inc.severity) {
         severities[inc.severity] = (severities[inc.severity] || 0) + 1;
-      if (inc.status) statuses[inc.status] = (statuses[inc.status] || 0) + 1;
+      }
+      if (inc.status) {
+        statuses[inc.status] = (statuses[inc.status] || 0) + 1;
+      }
     });
 
     return {
       success: true,
       data: {
-        totalActive: incidents.filter((inc) => inc.status !== "resolved")
-          .length,
+        totalActive: incidents.filter((inc) => inc.status !== "resolved").length,
         types,
         severities,
         statuses,
       },
     };
-  } catch (error: any) {
-    throw new HttpsError("internal", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new HttpsError("internal", message);
   }
 });
 
-// 4. Concession Price Optimisation Agent
+/**
+ * Callable function that updates concession rewards (like organic hotdog point costs)
+ * dynamically based on surplus overstock alert status.
+ *
+ * @param request.data.overstockAlert - Boolean indicating if an overstock pricing model should trigger.
+ */
 export const autonomicConcessionOptimiser = onCall(async (request) => {
   const { overstockAlert } = request.data;
   try {
@@ -277,7 +301,8 @@ export const autonomicConcessionOptimiser = onCall(async (request) => {
       });
 
     return { success: true, pointCost: currentCost };
-  } catch (error: any) {
-    throw new HttpsError("internal", error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new HttpsError("internal", message);
   }
 });

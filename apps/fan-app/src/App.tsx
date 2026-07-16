@@ -154,16 +154,9 @@ interface AppState {
 
 type Action =
   | { type: "SET_ROLE"; payload: AppState["role"] }
-  | { type: "TOGGLE_DARK_MODE" }
-  | { type: "TOGGLE_ACCESSIBILITY" }
   | { type: "ADD_ECO_POINTS"; payload: number }
   | { type: "RESET_BURST" }
-  | {
-      type: "UPDATE_ACCESSIBILITY_NEEDS";
-      payload: AppState["accessibilityNeeds"];
-    }
   | { type: "ADD_INCIDENT"; payload: Incident }
-  | { type: "CLEAR_INCIDENT_FLASH"; payload: string }
   | {
       type: "TOGGLE_TASK";
       payload: {
@@ -223,10 +216,6 @@ function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "SET_ROLE":
       return { ...state, role: action.payload };
-    case "TOGGLE_DARK_MODE":
-      return { ...state, isDarkMode: !state.isDarkMode };
-    case "TOGGLE_ACCESSIBILITY":
-      return { ...state, isAccessibilityMode: !state.isAccessibilityMode };
     case "ADD_ECO_POINTS": {
       const newPoints = state.ecoPoints + action.payload;
       const calculatedLevel = Math.floor(newPoints / 100) + 1;
@@ -240,17 +229,8 @@ function appReducer(state: AppState, action: Action): AppState {
     }
     case "RESET_BURST":
       return { ...state, triggerLevelBurst: false };
-    case "UPDATE_ACCESSIBILITY_NEEDS":
-      return { ...state, accessibilityNeeds: action.payload };
     case "ADD_INCIDENT":
       return { ...state, incidents: [action.payload, ...state.incidents] };
-    case "CLEAR_INCIDENT_FLASH":
-      return {
-        ...state,
-        incidents: state.incidents.map((inc) =>
-          inc.id === action.payload ? { ...inc, isNew: false } : inc,
-        ),
-      };
     case "TOGGLE_TASK": {
       const rawStatus = action.payload.status;
       const normalizedStatus = (rawStatus === "In Progress"

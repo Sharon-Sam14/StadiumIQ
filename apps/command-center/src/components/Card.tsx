@@ -7,20 +7,20 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   isHoverable?: boolean;
 }
 
-export default function Card({ 
-  children, 
-  title, 
-  headerAction, 
-  isHoverable = true, 
+export default function Card({
+  children,
+  title,
+  headerAction,
+  isHoverable = true,
   className,
-  ...props 
+  ...props
 }: CardProps) {
   return (
-    <div 
+    <div
       className={clsx(
         "glass-panel rounded-md overflow-hidden",
         isHoverable && "glass-panel-hover",
-        className
+        className,
       )}
       role="region"
       aria-label={title || "Dashboard Panel"}
@@ -32,15 +32,11 @@ export default function Card({
             {title}
           </h3>
           {headerAction && (
-            <div className="flex items-center">
-              {headerAction}
-            </div>
+            <div className="flex items-center">{headerAction}</div>
           )}
         </div>
       )}
-      <div className="p-6">
-        {children}
-      </div>
+      <div className="p-6">{children}</div>
     </div>
   );
 }

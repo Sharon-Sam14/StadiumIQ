@@ -3,16 +3,12 @@
     {
       "collectionGroup": "leaderboards",
       "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "xpPoints", "order": "DESCENDING" }
-      ]
+      "fields": [{ "fieldPath": "xpPoints", "order": "DESCENDING" }]
     },
     {
       "collectionGroup": "leaderboards",
       "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "ecoPoints", "order": "DESCENDING" }
-      ]
+      "fields": [{ "fieldPath": "ecoPoints", "order": "DESCENDING" }]
     }
   ],
   "fieldOverrides": []

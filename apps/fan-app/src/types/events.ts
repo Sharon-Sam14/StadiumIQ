@@ -18,7 +18,14 @@ export const IncidentCreatedEventSchema = z.object({
   incident: z.object({
     id: z.string(),
     description: z.string(),
-    category: z.enum(["crowd", "medical", "security", "infrastructure", "lost_item", "other"]),
+    category: z.enum([
+      "crowd",
+      "medical",
+      "security",
+      "infrastructure",
+      "lost_item",
+      "other",
+    ]),
     severity: z.enum(["low", "medium", "high", "critical"]),
     status: z.enum(["active", "assigned", "resolved"]),
     zone: z.string().optional(),

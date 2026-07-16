@@ -7,10 +7,11 @@ This document maps all cloud operations, interfaces, and serverless RAG AI trigg
 ## 1. Firebase Cloud Functions HTTPS Endpoints
 
 ### Seeding Data: `seedFirestore`
-* **Trigger**: HTTP GET/POST Request
-* **Endpoint URL**: `https://<region>-<project-id>.cloudfunctions.net/seedFirestore`
-* **Description**: Resets and populates Cloud Firestore collections with default event matches, venues, users, rewards, and checklists.
-* **Response Shapes**:
+
+- **Trigger**: HTTP GET/POST Request
+- **Endpoint URL**: `https://<region>-<project-id>.cloudfunctions.net/seedFirestore`
+- **Description**: Resets and populates Cloud Firestore collections with default event matches, venues, users, rewards, and checklists.
+- **Response Shapes**:
   ```json
   {
     "success": true,
@@ -25,15 +26,16 @@ This document maps all cloud operations, interfaces, and serverless RAG AI trigg
 These functions are invoked securely from client PWA portals via the `httpsCallable` Firebase Client SDK.
 
 ### AI Concierge: `aiConcierge`
-* **Arguments**:
+
+- **Arguments**:
   ```json
   {
     "prompt": "String",
     "sessionId": "String"
   }
   ```
-* **Description**: Feeds the prompt to Google Gemini 1.5 Flash using context rules regarding stadium prohibited items and bag policies.
-* **Returns**:
+- **Description**: Feeds the prompt to Google Gemini 1.5 Flash using context rules regarding stadium prohibited items and bag policies.
+- **Returns**:
   ```json
   {
     "success": true,
@@ -42,9 +44,10 @@ These functions are invoked securely from client PWA portals via the `httpsCalla
   ```
 
 ### Volunteer Analytics: `getVolunteerAnalytics`
-* **Arguments**: `{}`
-* **Description**: Tallies total active incidents and aggregates categorizations.
-* **Returns**:
+
+- **Arguments**: `{}`
+- **Description**: Tallies total active incidents and aggregates categorizations.
+- **Returns**:
   ```json
   {
     "success": true,
@@ -58,14 +61,15 @@ These functions are invoked securely from client PWA portals via the `httpsCalla
   ```
 
 ### Dynamic Concessions Optimizer: `autonomicConcessionOptimiser`
-* **Arguments**:
+
+- **Arguments**:
   ```json
   {
     "overstockAlert": true
   }
   ```
-* **Description**: Autonomously triggers hotdog points discounts (80p to 40p) to resolve perishable surplus risks.
-* **Returns**:
+- **Description**: Autonomously triggers hotdog points discounts (80p to 40p) to resolve perishable surplus risks.
+- **Returns**:
   ```json
   {
     "success": true,

@@ -12,7 +12,8 @@ export default defineConfig({
       manifest: {
         name: "StadiumIQ Volunteer Portal",
         short_name: "StaffIQ",
-        description: "Task queues, shift briefings, and AI assistance for stadium volunteers.",
+        description:
+          "Task queues, shift briefings, and AI assistance for stadium volunteers.",
         theme_color: "#080A0C",
         background_color: "#080A0C",
         display: "standalone",
@@ -23,16 +24,16 @@ export default defineConfig({
           {
             src: "icon-192.png",
             sizes: "192x192",
-            type: "image/png"
+            type: "image/png",
           },
           {
             src: "icon-512.png",
             sizes: "512x512",
-            type: "image/png"
-          }
-        ]
-      }
-    })
+            type: "image/png",
+          },
+        ],
+      },
+    }),
   ],
   resolve: {
     alias: {

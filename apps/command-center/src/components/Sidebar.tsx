@@ -3,16 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  AlertTriangle, 
-  ClipboardList, 
-  Leaf, 
-  FileBarChart2, 
+import {
+  LayoutDashboard,
+  Users,
+  AlertTriangle,
+  ClipboardList,
+  Leaf,
+  FileBarChart2,
   ShieldAlert,
   LogOut,
-  User
+  User,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -21,7 +21,10 @@ interface SidebarProps {
   userName?: string;
 }
 
-export default function Sidebar({ currentRole = "Venue Director", userName = "Carlos Mendes" }: SidebarProps) {
+export default function Sidebar({
+  currentRole = "Venue Director",
+  userName = "Carlos Mendes",
+}: SidebarProps) {
   const pathname = usePathname();
 
   const menuItems = [
@@ -34,7 +37,7 @@ export default function Sidebar({ currentRole = "Venue Director", userName = "Ca
   ];
 
   return (
-    <aside 
+    <aside
       className="w-[280px] h-screen fixed left-0 top-0 bg-bg-surface border-r border-border-subtle flex flex-col justify-between z-30"
       id="sidebar-container"
       role="navigation"
@@ -47,8 +50,12 @@ export default function Sidebar({ currentRole = "Venue Director", userName = "Ca
             <ShieldAlert className="w-5 h-5 text-brand-gold" />
           </div>
           <div>
-            <h1 className="text-md font-outfit font-bold tracking-wide text-text-primary">StadiumIQ</h1>
-            <span className="text-[10px] text-brand-gold tracking-widest uppercase font-semibold">Command Center</span>
+            <h1 className="text-md font-outfit font-bold tracking-wide text-text-primary">
+              StadiumIQ
+            </h1>
+            <span className="text-[10px] text-brand-gold tracking-widest uppercase font-semibold">
+              Command Center
+            </span>
           </div>
         </div>
 
@@ -64,13 +71,18 @@ export default function Sidebar({ currentRole = "Venue Director", userName = "Ca
                 href={item.href}
                 className={clsx(
                   "flex items-center gap-3.5 px-4.5 py-3 rounded-md text-sm transition-all duration-200",
-                  isActive 
-                    ? "bg-brand-green-deep/30 border border-brand-green-light/40 text-text-primary" 
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/40 border border-transparent"
+                  isActive
+                    ? "bg-brand-green-deep/30 border border-brand-green-light/40 text-text-primary"
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated/40 border border-transparent",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon className={clsx("w-5 h-5", isActive ? "text-brand-gold" : "text-text-secondary")} />
+                <Icon
+                  className={clsx(
+                    "w-5 h-5",
+                    isActive ? "text-brand-gold" : "text-text-secondary",
+                  )}
+                />
                 <span className="font-medium">{item.name}</span>
               </Link>
             );
@@ -85,12 +97,16 @@ export default function Sidebar({ currentRole = "Venue Director", userName = "Ca
             <User className="w-5 h-5" />
           </div>
           <div className="overflow-hidden">
-            <p className="text-xs font-semibold text-text-primary truncate">{userName}</p>
-            <p className="text-[10px] text-text-secondary truncate">{currentRole}</p>
+            <p className="text-xs font-semibold text-text-primary truncate">
+              {userName}
+            </p>
+            <p className="text-[10px] text-text-secondary truncate">
+              {currentRole}
+            </p>
           </div>
         </div>
-        
-        <button 
+
+        <button
           className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-border-subtle hover:border-alert-danger/40 hover:bg-alert-danger/5 hover:text-alert-danger text-text-secondary text-xs rounded-sm transition-all duration-200"
           onClick={() => console.log("Logging out...")}
           aria-label="Logout from session"

@@ -1,4 +1,9 @@
-import type { Incident, IncidentAction, IncidentStatus, IncidentSeverity } from "@/types/incidents";
+import type {
+  Incident,
+  IncidentAction,
+  IncidentStatus,
+  IncidentSeverity,
+} from "@/types/incidents";
 import { generateId } from "./formatters";
 
 // ============================================================
@@ -41,7 +46,10 @@ export const initialIncidents: Incident[] = [
   },
 ];
 
-export function incidentReducer(state: Incident[], action: IncidentAction): Incident[] {
+export function incidentReducer(
+  state: Incident[],
+  action: IncidentAction,
+): Incident[] {
   switch (action.type) {
     case "ADD_INCIDENT": {
       // Prepend new incident to the top of the list
@@ -53,7 +61,7 @@ export function incidentReducer(state: Incident[], action: IncidentAction): Inci
       return state.map((incident) =>
         incident.id === id
           ? { ...incident, status, updatedAt: new Date().toISOString() }
-          : incident
+          : incident,
       );
     }
 
@@ -62,7 +70,7 @@ export function incidentReducer(state: Incident[], action: IncidentAction): Inci
       return state.map((incident) =>
         incident.id === id
           ? { ...incident, severity, updatedAt: new Date().toISOString() }
-          : incident
+          : incident,
       );
     }
 
@@ -101,7 +109,7 @@ export function createIncidentFromForm(values: {
  */
 export function filterBySeverity(
   incidents: Incident[],
-  severity: IncidentSeverity
+  severity: IncidentSeverity,
 ): Incident[] {
   return incidents.filter((i) => i.severity === severity);
 }

@@ -34,8 +34,9 @@ export const Card = React.memo(function Card({
         "rounded-xl border overflow-hidden",
         glass ? "glass" : "bg-[var(--bg-surface)]",
         "border-[var(--border-subtle)]",
-        hoverable && "transition-all duration-200 hover:border-[var(--border-strong)] hover:-translate-y-0.5",
-        className
+        hoverable &&
+          "transition-all duration-200 hover:border-[var(--border-strong)] hover:-translate-y-0.5",
+        className,
       )}
     >
       {(title || headerRight) && (
@@ -47,10 +48,14 @@ export const Card = React.memo(function Card({
               </h3>
             )}
             {subtitle && (
-              <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">{subtitle}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">
+                {subtitle}
+              </p>
             )}
           </div>
-          {headerRight && <div className="flex items-center gap-2">{headerRight}</div>}
+          {headerRight && (
+            <div className="flex items-center gap-2">{headerRight}</div>
+          )}
         </div>
       )}
       <div className={clsx(!noPadding && "p-5")}>{children}</div>

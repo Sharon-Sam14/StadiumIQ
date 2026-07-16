@@ -1,14 +1,29 @@
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import {
-  Leaf, Trophy, QrCode, Gift, Activity,
-  Search, TreePine
+  Leaf,
+  Trophy,
+  QrCode,
+  Gift,
+  Activity,
+  Search,
+  TreePine,
 } from "lucide-react";
 import { AIBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { classifyWaste } from "@/utils/wasteClassifier";
 import { sanitizeInput } from "@/utils/sanitize";
-import { calcTreeEquivalence, getXPLevel, getXPProgress } from "@/utils/formatters";
+import {
+  calcTreeEquivalence,
+  getXPLevel,
+  getXPProgress,
+} from "@/utils/formatters";
 import { GoalCelebration } from "@/components/animations/GoalCelebration";
 import type { EcoTransaction } from "@/types/fan";
 import type { UseEcoPointsReturn } from "@/hooks/useEcoPoints";
@@ -20,25 +35,82 @@ import { functions } from "@/utils/firebase";
 // ============================================================
 
 const ECO_MISSIONS = [
-  { id: "mission-1", title: "Public Transit Commuter", description: "Arrive via subway or shuttle bus.", points: 30 },
-  { id: "mission-2", title: "Recycling Master", description: "Recycle at a smart bin station.", points: 50 },
-  { id: "mission-3", title: "Hydration Station Hero", description: "Refill at a water station.", points: 15 },
-  { id: "mission-4", title: "Sponsor Explorer", description: "Visit 2+ sponsor experience tents.", points: 40 },
-  { id: "mission-5", title: "Zero Plastic Pledge", description: "Skip single-use plastic today.", points: 25 },
+  {
+    id: "mission-1",
+    title: "Public Transit Commuter",
+    description: "Arrive via subway or shuttle bus.",
+    points: 30,
+  },
+  {
+    id: "mission-2",
+    title: "Recycling Master",
+    description: "Recycle at a smart bin station.",
+    points: 50,
+  },
+  {
+    id: "mission-3",
+    title: "Hydration Station Hero",
+    description: "Refill at a water station.",
+    points: 15,
+  },
+  {
+    id: "mission-4",
+    title: "Sponsor Explorer",
+    description: "Visit 2+ sponsor experience tents.",
+    points: 40,
+  },
+  {
+    id: "mission-5",
+    title: "Zero Plastic Pledge",
+    description: "Skip single-use plastic today.",
+    points: 25,
+  },
 ];
 
 const ECO_REWARDS = [
-  { id: "r1", title: "Free Organic Concession Hotdog", description: "Redeem at Section 112 Concessions.", pointCost: 80 },
-  { id: "r2", title: "20% Off Merchandise Voucher", description: "20% off at any official FIFA merch store.", pointCost: 150 },
-  { id: "r3", title: "Free NJ Transit Ride", description: "Valid for one post-match train ride.", pointCost: 50 },
-  { id: "r4", title: "VIP Eco Lounge Access", description: "30-min access to the Green Zone Lounge.", pointCost: 200 },
+  {
+    id: "r1",
+    title: "Free Organic Concession Hotdog",
+    description: "Redeem at Section 112 Concessions.",
+    pointCost: 80,
+  },
+  {
+    id: "r2",
+    title: "20% Off Merchandise Voucher",
+    description: "20% off at any official FIFA merch store.",
+    pointCost: 150,
+  },
+  {
+    id: "r3",
+    title: "Free NJ Transit Ride",
+    description: "Valid for one post-match train ride.",
+    pointCost: 50,
+  },
+  {
+    id: "r4",
+    title: "VIP Eco Lounge Access",
+    description: "30-min access to the Green Zone Lounge.",
+    pointCost: 200,
+  },
 ];
 
 const LEADERBOARD = [
   { rank: 1, name: "Amara Diallo", country: "SEN", ecoPoints: 420, fanXP: 840 },
   { rank: 2, name: "Ji-Ho Kim", country: "KOR", ecoPoints: 385, fanXP: 770 },
-  { rank: 3, name: "Carlos Mendes", country: "BRA", ecoPoints: 310, fanXP: 620 },
-  { rank: 4, name: "Fatima Al-Rashidi", country: "MAR", ecoPoints: 275, fanXP: 550 },
+  {
+    rank: 3,
+    name: "Carlos Mendes",
+    country: "BRA",
+    ecoPoints: 310,
+    fanXP: 620,
+  },
+  {
+    rank: 4,
+    name: "Fatima Al-Rashidi",
+    country: "MAR",
+    ecoPoints: 275,
+    fanXP: 550,
+  },
   { rank: 5, name: "Lena Müller", country: "GER", ecoPoints: 240, fanXP: 480 },
 ];
 
@@ -49,7 +121,12 @@ const LIVE_METRICS = {
   transitCheckins: 6810,
 };
 
-const ACTION_TYPES: { type: EcoTransaction["type"]; label: string; points: number; icon: string }[] = [
+const ACTION_TYPES: {
+  type: EcoTransaction["type"];
+  label: string;
+  points: number;
+  icon: string;
+}[] = [
   { type: "transit", label: "Public Transit", points: 30, icon: "🚇" },
   { type: "recycling", label: "Recycling Bin", points: 50, icon: "♻" },
   { type: "water_refill", label: "Water Refill", points: 15, icon: "💧" },
@@ -60,13 +137,20 @@ interface EcoEarnTabProps {
   readonly ecoHook: UseEcoPointsReturn;
 }
 
-export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTabProps): React.JSX.Element {
+export const EcoEarnTab = React.memo(function EcoEarnTab({
+  ecoHook,
+}: EcoEarnTabProps): React.JSX.Element {
   const { balance, addPoints, spendPoints, completeMission } = ecoHook;
 
   const [isLoading, setIsLoading] = useState(true);
   const [wasteInput, setWasteInput] = useState("");
-  const [wasteResult, setWasteResult] = useState<ReturnType<typeof classifyWaste> | null>(null);
-  const [activeVoucher, setActiveVoucher] = useState<{ title: string; code: string } | null>(null);
+  const [wasteResult, setWasteResult] = useState<ReturnType<
+    typeof classifyWaste
+  > | null>(null);
+  const [activeVoucher, setActiveVoucher] = useState<{
+    title: string;
+    code: string;
+  } | null>(null);
   const [checkinFeedback, setCheckinFeedback] = useState<string | null>(null);
   const [liveMetrics, setLiveMetrics] = useState(LIVE_METRICS);
   const [celebrationActive, setCelebrationActive] = useState(false);
@@ -81,8 +165,12 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveMetrics((prev) => ({
-        wasteSavedKg: parseFloat((prev.wasteSavedKg + Math.random() * 0.8).toFixed(1)),
-        carbonOffsetKg: parseFloat((prev.carbonOffsetKg + Math.random() * 1.2).toFixed(1)),
+        wasteSavedKg: parseFloat(
+          (prev.wasteSavedKg + Math.random() * 0.8).toFixed(1),
+        ),
+        carbonOffsetKg: parseFloat(
+          (prev.carbonOffsetKg + Math.random() * 1.2).toFixed(1),
+        ),
         waterRefills: prev.waterRefills + Math.floor(Math.random() * 3),
         transitCheckins: prev.transitCheckins + Math.floor(Math.random() * 2),
       }));
@@ -92,11 +180,14 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
 
   const treeEquivalence = useMemo(
     () => calcTreeEquivalence(liveMetrics.carbonOffsetKg),
-    [liveMetrics.carbonOffsetKg]
+    [liveMetrics.carbonOffsetKg],
   );
 
   const xpLevel = useMemo(() => getXPLevel(balance.fanXP), [balance.fanXP]);
-  const xpProgress = useMemo(() => getXPProgress(balance.fanXP), [balance.fanXP]);
+  const xpProgress = useMemo(
+    () => getXPProgress(balance.fanXP),
+    [balance.fanXP],
+  );
 
   const prevLevelRef = useRef(xpLevel.label);
 
@@ -107,11 +198,14 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
     }
   }, [xpLevel.label]);
 
-  const handleCheckin = useCallback((type: EcoTransaction["type"], label: string, points: number): void => {
-    addPoints(type);
-    setCheckinFeedback(`Check-in: ${label} — +${points} Eco Points earned!`);
-    setTimeout(() => setCheckinFeedback(null), 3000);
-  }, [addPoints]);
+  const handleCheckin = useCallback(
+    (type: EcoTransaction["type"], label: string, points: number): void => {
+      addPoints(type);
+      setCheckinFeedback(`Check-in: ${label} — +${points} Eco Points earned!`);
+      setTimeout(() => setCheckinFeedback(null), 3000);
+    },
+    [addPoints],
+  );
 
   const handleWasteClassify = useCallback((): void => {
     const sanitized = sanitizeInput(wasteInput, 100);
@@ -120,16 +214,21 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
     setWasteResult(result);
   }, [wasteInput]);
 
-  const handleRedeemReward = useCallback((id: string, title: string, cost: number): void => {
-    const success = spendPoints(cost, id);
-    if (success) {
-      const code = `VOUCH-${Math.random().toString(36).toUpperCase().slice(2, 8)}`;
-      setActiveVoucher({ title, code });
-    } else {
-      setCheckinFeedback(`Not enough Eco Points. You need ${cost} points to redeem this reward.`);
-      setTimeout(() => setCheckinFeedback(null), 3500);
-    }
-  }, [spendPoints]);
+  const handleRedeemReward = useCallback(
+    (id: string, title: string, cost: number): void => {
+      const success = spendPoints(cost, id);
+      if (success) {
+        const code = `VOUCH-${Math.random().toString(36).toUpperCase().slice(2, 8)}`;
+        setActiveVoucher({ title, code });
+      } else {
+        setCheckinFeedback(
+          `Not enough Eco Points. You need ${cost} points to redeem this reward.`,
+        );
+        setTimeout(() => setCheckinFeedback(null), 3500);
+      }
+    },
+    [spendPoints],
+  );
 
   if (isLoading) {
     return (
@@ -147,7 +246,10 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
   return (
     <div className="space-y-5 animate-fade-in">
       {/* 6. Level Up Goal celebration component */}
-      <GoalCelebration active={celebrationActive} onComplete={() => setCelebrationActive(false)} />
+      <GoalCelebration
+        active={celebrationActive}
+        onComplete={() => setCelebrationActive(false)}
+      />
       {/* Feedback Toast */}
       {checkinFeedback && (
         <div
@@ -163,7 +265,9 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       <Card title="GenAI Concessions Pricing Simulator">
         <div className="space-y-3">
           <p className="text-[10px] text-[var(--text-tertiary)]">
-            Simulate a background GenAI telemetry agent monitoring concession overstock risks. Turning on the simulator issues a PRICE_DROP directive to lower points cost and redirect event traffic.
+            Simulate a background GenAI telemetry agent monitoring concession
+            overstock risks. Turning on the simulator issues a PRICE_DROP
+            directive to lower points cost and redirect event traffic.
           </p>
           <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-elevated)]/50 border border-[var(--border-subtle)]">
             <span className="text-xs font-semibold text-[var(--text-primary)]">
@@ -174,7 +278,10 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
                 const nextState = !priceDropActive;
                 setPriceDropActive(nextState);
                 try {
-                  const callOptimiser = httpsCallable(functions, "autonomicConcessionOptimiser");
+                  const callOptimiser = httpsCallable(
+                    functions,
+                    "autonomicConcessionOptimiser",
+                  );
                   await callOptimiser({ overstockAlert: nextState });
                 } catch (err) {
                   console.error("AI Price Drop error:", err);
@@ -193,7 +300,9 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
             <div className="rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-3 text-[11px] font-semibold text-red-400 animate-pulse flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-ping shrink-0" />
               <span>
-                <strong>⚡ AI PRICE_DROP Directive Active:</strong> MetLife Stadium Section 112 organic hotdog inventory surplus detected. Points cost optimized by 50% (80p → 40p) to reduce food waste!
+                <strong>⚡ AI PRICE_DROP Directive Active:</strong> MetLife
+                Stadium Section 112 organic hotdog inventory surplus detected.
+                Points cost optimized by 50% (80p → 40p) to reduce food waste!
               </span>
             </div>
           )}
@@ -215,10 +324,18 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
             <h3 className="font-display font-bold text-base mt-3 mb-4 text-[var(--text-primary)]">
               {activeVoucher.title}
             </h3>
-            <div className="w-36 h-36 bg-white rounded-xl mx-auto flex items-center justify-center p-3 mb-4" aria-label="Voucher QR code">
-              <QrCode className="w-full h-full text-black opacity-80" aria-hidden="true" />
+            <div
+              className="w-36 h-36 bg-white rounded-xl mx-auto flex items-center justify-center p-3 mb-4"
+              aria-label="Voucher QR code"
+            >
+              <QrCode
+                className="w-full h-full text-black opacity-80"
+                aria-hidden="true"
+              />
             </div>
-            <p className="font-mono text-xs text-[var(--brand-gold)] font-bold mb-2">{activeVoucher.code}</p>
+            <p className="font-mono text-xs text-[var(--brand-gold)] font-bold mb-2">
+              {activeVoucher.code}
+            </p>
             <p className="text-[10px] text-[var(--text-tertiary)] mb-4">
               Scan at any concession or merchandise point to claim.
             </p>
@@ -238,18 +355,31 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
         <Card>
           <div className="flex items-center gap-1.5 text-[var(--brand-gold)] mb-2">
             <Leaf className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">Eco Points</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider">
+              Eco Points
+            </span>
           </div>
-          <p className="font-display font-black text-3xl text-[var(--text-primary)]">{balance.ecoPoints}</p>
-          <p className="text-[9px] text-[var(--text-tertiary)] mt-1">Ready to redeem</p>
+          <p className="font-display font-black text-3xl text-[var(--text-primary)]">
+            {balance.ecoPoints}
+          </p>
+          <p className="text-[9px] text-[var(--text-tertiary)] mt-1">
+            Ready to redeem
+          </p>
         </Card>
 
         <Card>
-          <div className="flex items-center gap-1.5 mb-2" style={{ color: xpLevel.color }}>
+          <div
+            className="flex items-center gap-1.5 mb-2"
+            style={{ color: xpLevel.color }}
+          >
             <Trophy className="w-3.5 h-3.5" aria-hidden="true" />
-            <span className="text-[9px] font-bold uppercase tracking-wider">{xpLevel.label} Level</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider">
+              {xpLevel.label} Level
+            </span>
           </div>
-          <p className="font-display font-black text-3xl text-[var(--text-primary)]">{balance.fanXP}</p>
+          <p className="font-display font-black text-3xl text-[var(--text-primary)]">
+            {balance.fanXP}
+          </p>
           <div className="mt-2">
             <div
               className="h-1.5 rounded-full bg-[var(--bg-elevated)] overflow-hidden"
@@ -261,10 +391,15 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
             >
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${xpProgress}%`, backgroundColor: xpLevel.color }}
+                style={{
+                  width: `${xpProgress}%`,
+                  backgroundColor: xpLevel.color,
+                }}
               />
             </div>
-            <p className="text-[9px] text-[var(--text-tertiary)] mt-1">{xpProgress}% to next level</p>
+            <p className="text-[9px] text-[var(--text-tertiary)] mt-1">
+              {xpProgress}% to next level
+            </p>
           </div>
         </Card>
       </div>
@@ -274,20 +409,28 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Activity className="w-4 h-4 text-green-400" aria-hidden="true" />
-            <span className="text-xs font-bold text-[var(--text-primary)]">Carbon Footprint Saved Today</span>
+            <span className="text-xs font-bold text-[var(--text-primary)]">
+              Carbon Footprint Saved Today
+            </span>
           </div>
           <AIBadge label="AI-Estimated" />
         </div>
         <p className="font-display font-black text-4xl text-green-400 mb-1">
-          {liveMetrics.carbonOffsetKg.toFixed(1)} <span className="text-xl">kg CO₂</span>
+          {liveMetrics.carbonOffsetKg.toFixed(1)}{" "}
+          <span className="text-xl">kg CO₂</span>
         </p>
         <p className="text-xs text-[var(--text-secondary)]">
-          Baseline: same-scale event without eco programme would emit <strong className="text-red-400">~8,200 kg</strong> more.
+          Baseline: same-scale event without eco programme would emit{" "}
+          <strong className="text-red-400">~8,200 kg</strong> more.
         </p>
         <div className="flex items-center gap-2 mt-2 p-2.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-          <TreePine className="w-4 h-4 text-green-400 shrink-0" aria-hidden="true" />
+          <TreePine
+            className="w-4 h-4 text-green-400 shrink-0"
+            aria-hidden="true"
+          />
           <p className="text-xs text-[var(--text-secondary)]">
-            Today's offset equals planting <strong className="text-green-400">{treeEquivalence} trees</strong>{" "}
+            Today's offset equals planting{" "}
+            <strong className="text-green-400">{treeEquivalence} trees</strong>{" "}
             (at 21.77 kg CO₂ absorbed per tree/year)
           </p>
         </div>
@@ -296,7 +439,8 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       {/* QR Check-in Simulator */}
       <Card title="QR Check-in Simulator" headerRight={<AIBadge />}>
         <p className="text-[10px] text-[var(--text-secondary)] mb-3">
-          Scan stations to earn Eco Points. Tap any action below to simulate a QR scan.
+          Scan stations to earn Eco Points. Tap any action below to simulate a
+          QR scan.
         </p>
         <div className="grid grid-cols-2 gap-2">
           {ACTION_TYPES.map(({ type, label, points, icon }) => (
@@ -306,8 +450,12 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
               className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:-translate-y-0.5 transition-all text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-gold)]"
               aria-label={`Check in at ${label} to earn ${points} Eco Points`}
             >
-              <span className="text-sm font-medium text-[var(--text-primary)]">{icon} {label}</span>
-              <span className="text-xs font-bold text-[var(--brand-gold)]">+{points}p</span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">
+                {icon} {label}
+              </span>
+              <span className="text-xs font-bold text-[var(--brand-gold)]">
+                +{points}p
+              </span>
             </button>
           ))}
         </div>
@@ -340,7 +488,10 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
         {wasteResult && (
           <div
             className="mt-3 p-3 rounded-lg border animate-slide-up"
-            style={{ borderColor: wasteResult.binColor + "50", backgroundColor: wasteResult.binColor + "15" }}
+            style={{
+              borderColor: wasteResult.binColor + "50",
+              backgroundColor: wasteResult.binColor + "15",
+            }}
             role="status"
             aria-live="polite"
           >
@@ -350,10 +501,16 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
                 style={{ backgroundColor: wasteResult.binColor }}
                 aria-hidden="true"
               />
-              <span className="text-xs font-bold text-[var(--text-primary)]">{wasteResult.binLabel}</span>
+              <span className="text-xs font-bold text-[var(--text-primary)]">
+                {wasteResult.binLabel}
+              </span>
             </div>
-            <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">{wasteResult.instruction}</p>
-            <p className="text-[10px] text-[var(--text-tertiary)] mt-1.5 italic">{wasteResult.ecoNote}</p>
+            <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+              {wasteResult.instruction}
+            </p>
+            <p className="text-[10px] text-[var(--text-tertiary)] mt-1.5 italic">
+              {wasteResult.ecoNote}
+            </p>
           </div>
         )}
       </Card>
@@ -366,10 +523,11 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
             return (
               <label
                 key={mission.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${completed
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
+                  completed
                     ? "border-green-500/30 bg-green-900/15 opacity-70"
                     : "border-[var(--border-subtle)] hover:border-[var(--border-strong)]"
-                  }`}
+                }`}
               >
                 <input
                   type="checkbox"
@@ -380,10 +538,14 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
                   aria-label={`${mission.title}: ${mission.description}`}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold ${completed ? "line-through text-[var(--text-tertiary)]" : "text-[var(--text-primary)]"}`}>
+                  <p
+                    className={`text-xs font-semibold ${completed ? "line-through text-[var(--text-tertiary)]" : "text-[var(--text-primary)]"}`}
+                  >
                     {mission.title}
                   </p>
-                  <p className="text-[10px] text-[var(--text-tertiary)] truncate">{mission.description}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] truncate">
+                    {mission.description}
+                  </p>
                 </div>
                 <span className="text-[10px] font-bold text-[var(--brand-gold)] bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20 px-2 py-0.5 rounded-full">
                   +{mission.points}p
@@ -400,23 +562,41 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
           {LEADERBOARD.map((entry) => (
             <div
               key={entry.rank}
-              className={`flex items-center gap-3 p-2.5 rounded-lg ${entry.name === "Carlos Mendes" ? "bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20" : "bg-[var(--bg-elevated)]/50"
-                }`}
+              className={`flex items-center gap-3 p-2.5 rounded-lg ${
+                entry.name === "Carlos Mendes"
+                  ? "bg-[var(--brand-gold)]/10 border border-[var(--brand-gold)]/20"
+                  : "bg-[var(--bg-elevated)]/50"
+              }`}
             >
-              <span className={`font-display font-black text-sm w-5 text-center ${entry.rank === 1 ? "text-[var(--brand-gold)]" : "text-[var(--text-tertiary)]"
-                }`}>
+              <span
+                className={`font-display font-black text-sm w-5 text-center ${
+                  entry.rank === 1
+                    ? "text-[var(--brand-gold)]"
+                    : "text-[var(--text-tertiary)]"
+                }`}
+              >
                 #{entry.rank}
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-[var(--text-primary)] truncate">
                   {entry.name}
-                  {entry.name === "Carlos Mendes" && <span className="text-[9px] text-[var(--brand-gold)] ml-1">(You)</span>}
+                  {entry.name === "Carlos Mendes" && (
+                    <span className="text-[9px] text-[var(--brand-gold)] ml-1">
+                      (You)
+                    </span>
+                  )}
                 </p>
-                <p className="text-[9px] text-[var(--text-tertiary)]">{entry.country}</p>
+                <p className="text-[9px] text-[var(--text-tertiary)]">
+                  {entry.country}
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-xs font-bold text-[var(--brand-gold)]">{entry.ecoPoints}p</p>
-                <p className="text-[9px] text-[var(--text-tertiary)]">{entry.fanXP} XP</p>
+                <p className="text-xs font-bold text-[var(--brand-gold)]">
+                  {entry.ecoPoints}p
+                </p>
+                <p className="text-[9px] text-[var(--text-tertiary)]">
+                  {entry.fanXP} XP
+                </p>
               </div>
             </div>
           ))}
@@ -424,24 +604,41 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       </Card>
 
       {/* Redeem Rewards Store */}
-      <Card title="Redeem Rewards Store" headerRight={<span className="text-xs text-[var(--brand-gold)] font-bold">{balance.ecoPoints} pts available</span>}>
+      <Card
+        title="Redeem Rewards Store"
+        headerRight={
+          <span className="text-xs text-[var(--brand-gold)] font-bold">
+            {balance.ecoPoints} pts available
+          </span>
+        }
+      >
         <div className="space-y-3">
           {ECO_REWARDS.map((reward) => {
             const isOrganicHotdog = reward.id === "r1";
-            const actualCost = (isOrganicHotdog && priceDropActive) ? 40 : reward.pointCost;
+            const actualCost =
+              isOrganicHotdog && priceDropActive ? 40 : reward.pointCost;
             const canAfford = balance.ecoPoints >= actualCost;
             return (
               <div
                 key={reward.id}
                 className="flex items-center gap-3 p-3 rounded-lg border border-[var(--border-subtle)]"
               >
-                <Gift className="w-4 h-4 text-[var(--brand-gold)] shrink-0" aria-hidden="true" />
+                <Gift
+                  className="w-4 h-4 text-[var(--brand-gold)] shrink-0"
+                  aria-hidden="true"
+                />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[var(--text-primary)]">{reward.title}</p>
-                  <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{reward.description}</p>
+                  <p className="text-xs font-semibold text-[var(--text-primary)]">
+                    {reward.title}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+                    {reward.description}
+                  </p>
                 </div>
                 <button
-                  onClick={() => handleRedeemReward(reward.id, reward.title, actualCost)}
+                  onClick={() =>
+                    handleRedeemReward(reward.id, reward.title, actualCost)
+                  }
                   disabled={!canAfford}
                   className="shrink-0 px-3 py-1.5 rounded-lg bg-[var(--brand-gold)] text-black font-bold text-[10px] disabled:opacity-35 disabled:cursor-not-allowed hover:opacity-90 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-gold)]"
                   aria-label={`Redeem ${reward.title} for ${actualCost} Eco Points${!canAfford ? " (insufficient points)" : ""}`}
@@ -455,26 +652,54 @@ export const EcoEarnTab = React.memo(function EcoEarnTab({ ecoHook }: EcoEarnTab
       </Card>
 
       {/* Live Impact Telemetry */}
-      <Card title="MetLife Stadium Live Impact" headerRight={<AIBadge label="AI-Estimated" />}>
+      <Card
+        title="MetLife Stadium Live Impact"
+        headerRight={<AIBadge label="AI-Estimated" />}
+      >
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Waste Saved", value: `${liveMetrics.wasteSavedKg.toFixed(1)} kg`, color: "text-green-400" },
-            { label: "Carbon Offset", value: `${liveMetrics.carbonOffsetKg.toFixed(1)} kg`, color: "text-blue-400" },
-            { label: "Water Refills", value: liveMetrics.waterRefills.toLocaleString(), color: "text-cyan-400" },
-            { label: "Transit Rides", value: liveMetrics.transitCheckins.toLocaleString(), color: "text-[var(--text-primary)]" },
+            {
+              label: "Waste Saved",
+              value: `${liveMetrics.wasteSavedKg.toFixed(1)} kg`,
+              color: "text-green-400",
+            },
+            {
+              label: "Carbon Offset",
+              value: `${liveMetrics.carbonOffsetKg.toFixed(1)} kg`,
+              color: "text-blue-400",
+            },
+            {
+              label: "Water Refills",
+              value: liveMetrics.waterRefills.toLocaleString(),
+              color: "text-cyan-400",
+            },
+            {
+              label: "Transit Rides",
+              value: liveMetrics.transitCheckins.toLocaleString(),
+              color: "text-[var(--text-primary)]",
+            },
           ].map(({ label, value, color }) => (
             <div key={label} className="p-3 bg-[var(--bg-elevated)] rounded-lg">
-              <p className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold mb-1">{label}</p>
-              <p className={`font-display font-bold text-lg ${color} animate-fade-in`}>{value}</p>
+              <p className="text-[9px] text-[var(--text-tertiary)] uppercase font-semibold mb-1">
+                {label}
+              </p>
+              <p
+                className={`font-display font-bold text-lg ${color} animate-fade-in`}
+              >
+                {value}
+              </p>
             </div>
           ))}
         </div>
         <div className="mt-3 flex items-center gap-2 p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-          <TreePine className="w-3.5 h-3.5 text-green-400 shrink-0" aria-hidden="true" />
+          <TreePine
+            className="w-3.5 h-3.5 text-green-400 shrink-0"
+            aria-hidden="true"
+          />
           <p className="text-[10px] text-[var(--text-secondary)]">
             Today's carbon offset equals planting{" "}
-            <strong className="text-green-400">{treeEquivalence} trees</strong>
-            {" "}(AI-estimated at 21.77 kg CO₂ per tree/year)
+            <strong className="text-green-400">{treeEquivalence} trees</strong>{" "}
+            (AI-estimated at 21.77 kg CO₂ per tree/year)
           </p>
         </div>
       </Card>

@@ -82,9 +82,12 @@ function calcLevel(xp: number): number {
 /**
  * Helper: returns points earned per action type.
  */
-export const ECO_POINTS_TABLE: Record<EcoTransaction["type"], { points: number; xp: number }> = {
-  transit:       { points: 30,  xp: 30 * XP_PER_POINT_RATIO },
-  recycling:     { points: 50,  xp: 50 * XP_PER_POINT_RATIO },
-  water_refill:  { points: 15,  xp: 15 * XP_PER_POINT_RATIO },
-  sponsor_booth: { points: 20,  xp: 20 * XP_PER_POINT_RATIO },
+export const ECO_POINTS_TABLE: Record<
+  EcoTransaction["type"],
+  { points: number; xp: number }
+> = {
+  transit: { points: 30, xp: 30 * XP_PER_POINT_RATIO },
+  recycling: { points: 50, xp: 50 * XP_PER_POINT_RATIO },
+  water_refill: { points: 15, xp: 15 * XP_PER_POINT_RATIO },
+  sponsor_booth: { points: 20, xp: 20 * XP_PER_POINT_RATIO },
 };

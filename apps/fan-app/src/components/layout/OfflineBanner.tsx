@@ -32,7 +32,10 @@ export function OfflineBanner(): React.JSX.Element | null {
       className="flex items-center justify-center gap-2 px-4 py-2 bg-yellow-500/20 border-b border-yellow-500/40 text-yellow-200 text-xs font-semibold"
     >
       <WifiOff className="w-3.5 h-3.5" aria-hidden="true" />
-      <span>No internet connection. Live data is paused. Reconnecting automatically...</span>
+      <span>
+        No internet connection. Live data is paused. Reconnecting
+        automatically...
+      </span>
     </div>
   );
 }

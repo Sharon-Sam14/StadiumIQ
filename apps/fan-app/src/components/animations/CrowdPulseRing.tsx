@@ -40,11 +40,7 @@ export const CrowdPulseRing = React.memo(function CrowdPulseRing({
       className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
       role="presentation"
     >
-      <svg
-        className="w-full h-full"
-        viewBox="0 0 100 100"
-        aria-hidden="true"
-      >
+      <svg className="w-full h-full" viewBox="0 0 100 100" aria-hidden="true">
         {config.rings.map((ringIdx) => (
           <circle
             key={ringIdx}

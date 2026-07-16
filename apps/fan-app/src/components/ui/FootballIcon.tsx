@@ -28,7 +28,11 @@ export const FootballIcon = React.memo(function FootballIcon({
       role="presentation"
     >
       <circle cx="12" cy="12" r="10" fill="#f3f6fa" stroke="#1a1a1a" />
-      <polygon points="12,8.2 15.3,10.7 14,14.7 10,14.7 8.7,10.7" fill="#1a1a1a" stroke="#1a1a1a" />
+      <polygon
+        points="12,8.2 15.3,10.7 14,14.7 10,14.7 8.7,10.7"
+        fill="#1a1a1a"
+        stroke="#1a1a1a"
+      />
       <line x1="12" y1="8.2" x2="12" y2="2" stroke="#1a1a1a" />
       <line x1="15.3" y1="10.7" x2="20.5" y2="8.5" stroke="#1a1a1a" />
       <line x1="14" y1="14.7" x2="18" y2="21" stroke="#1a1a1a" />

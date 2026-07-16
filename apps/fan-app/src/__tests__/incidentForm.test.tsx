@@ -28,10 +28,7 @@ const mockIncidentHook = {
 describe("Report Incident Form Integration Test", () => {
   it("shows validation errors on empty submission, then succeeds when filled out correctly", async () => {
     render(
-      <VolunteerPortal
-        incidentHook={mockIncidentHook}
-        registeredNeeds={[]}
-      />
+      <VolunteerPortal incidentHook={mockIncidentHook} registeredNeeds={[]} />,
     );
 
     // Switch to Report Incident tab
@@ -39,7 +36,9 @@ describe("Report Incident Form Integration Test", () => {
     fireEvent.click(reportTab);
 
     // Submit immediately without filling out fields
-    const submitBtn = screen.getByRole("button", { name: /submit incident report/i });
+    const submitBtn = screen.getByRole("button", {
+      name: /submit incident report/i,
+    });
     fireEvent.click(submitBtn);
 
     // Assert that validation errors are displayed
@@ -53,7 +52,9 @@ describe("Report Incident Form Integration Test", () => {
     const categorySelect = screen.getByLabelText(/category/i);
     const severitySelect = screen.getByLabelText(/severity/i);
 
-    fireEvent.change(descriptionInput, { target: { value: "Crowd congestion observed near Gate A stairs" } });
+    fireEvent.change(descriptionInput, {
+      target: { value: "Crowd congestion observed near Gate A stairs" },
+    });
     fireEvent.change(zoneInput, { target: { value: "Gate A Escalators" } });
     fireEvent.change(categorySelect, { target: { value: "crowd" } });
     fireEvent.change(severitySelect, { target: { value: "high" } });
@@ -69,7 +70,7 @@ describe("Report Incident Form Integration Test", () => {
         category: "crowd",
         severity: "high",
         reportedBy: "volunteer",
-      })
+      }),
     );
 
     // Assert success screen is displayed

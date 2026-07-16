@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Users, BarChart3, ClipboardList, Trophy, Zap, Shield } from "lucide-react";
+import {
+  Users,
+  BarChart3,
+  ClipboardList,
+  Trophy,
+  Zap,
+  Shield,
+} from "lucide-react";
 import { FootballBackground } from "@/components/animations/FootballBackground";
 import { FootballIcon } from "@/components/ui/FootballIcon";
 import type { UserRole } from "@/types/fan";
@@ -21,23 +28,34 @@ const ROLE_CARDS: readonly RoleCard[] = [
   {
     role: "fan",
     label: "Fan",
-    description: "Your game-day companion for navigation, AI assistance, and eco rewards",
+    description:
+      "Your game-day companion for navigation, AI assistance, and eco rewards",
     icon: <Trophy className="w-8 h-8" aria-hidden="true" />,
     accent: "from-emerald-500/20 to-green-600/10 border-emerald-500/30",
-    highlights: ["Indoor BLE Navigation", "AI Concierge (50+ Languages)", "Eco Earn & Rewards"],
+    highlights: [
+      "Indoor BLE Navigation",
+      "AI Concierge (50+ Languages)",
+      "Eco Earn & Rewards",
+    ],
   },
   {
     role: "organizer",
     label: "Command Center",
-    description: "Mission-critical dashboard for real-time crowd intelligence and operations control",
+    description:
+      "Mission-critical dashboard for real-time crowd intelligence and operations control",
     icon: <BarChart3 className="w-8 h-8" aria-hidden="true" />,
     accent: "from-blue-500/20 to-indigo-600/10 border-blue-500/30",
-    highlights: ["Predictive Surge Forecasting", "AI Operations Advisor", "Live Incident Queue"],
+    highlights: [
+      "Predictive Surge Forecasting",
+      "AI Operations Advisor",
+      "Live Incident Queue",
+    ],
   },
   {
     role: "volunteer",
     label: "Volunteer",
-    description: "Your shift briefing, task board, and standard operating procedures assistant",
+    description:
+      "Your shift briefing, task board, and standard operating procedures assistant",
     icon: <ClipboardList className="w-8 h-8" aria-hidden="true" />,
     accent: "from-amber-500/20 to-yellow-600/10 border-amber-500/30",
     highlights: ["AI Shift Briefing", "Task Management", "SOP Chat Assistant"],
@@ -48,7 +66,9 @@ interface RoleSelectionPageProps {
   readonly onSelectRole: (role: NonNullable<UserRole>) => void;
 }
 
-export function RoleSelectionPage({ onSelectRole }: RoleSelectionPageProps): React.JSX.Element {
+export function RoleSelectionPage({
+  onSelectRole,
+}: RoleSelectionPageProps): React.JSX.Element {
   const [hoveredRole, setHoveredRole] = useState<UserRole>(null);
 
   return (
@@ -60,7 +80,10 @@ export function RoleSelectionPage({ onSelectRole }: RoleSelectionPageProps): Rea
       <header className="relative pt-16 pb-12 px-6 text-center overflow-hidden z-10">
         {/* FIFA badge */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[var(--brand-gold)]/30 bg-[var(--brand-gold)]/10 mb-6">
-          <Shield className="w-3.5 h-3.5 text-[var(--brand-gold)]" aria-hidden="true" />
+          <Shield
+            className="w-3.5 h-3.5 text-[var(--brand-gold)]"
+            aria-hidden="true"
+          />
           <span className="text-[11px] font-bold tracking-widest uppercase text-[var(--brand-gold)]">
             FIFA World Cup 2026
           </span>
@@ -72,12 +95,17 @@ export function RoleSelectionPage({ onSelectRole }: RoleSelectionPageProps): Rea
         <p className="text-[var(--text-secondary)] text-base md:text-lg max-w-xl mx-auto leading-relaxed">
           GenAI-powered unified operations and fan experience platform.
           <br />
-          <span className="text-[var(--text-tertiary)] text-sm">MetLife Stadium — East Rutherford, NJ</span>
+          <span className="text-[var(--text-tertiary)] text-sm">
+            MetLife Stadium — East Rutherford, NJ
+          </span>
         </p>
 
         {/* Live indicator */}
         <div className="inline-flex items-center gap-2 mt-6 px-3 py-1.5 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
-          <span className="w-2 h-2 rounded-full bg-[#00a651] animate-pulse" aria-hidden="true" />
+          <span
+            className="w-2 h-2 rounded-full bg-[#00a651] animate-pulse"
+            aria-hidden="true"
+          />
           <span className="text-[11px] text-[var(--text-secondary)] font-medium">
             Match 82 — Live Now
           </span>
@@ -114,10 +142,19 @@ export function RoleSelectionPage({ onSelectRole }: RoleSelectionPageProps): Rea
               </div>
 
               {/* Feature highlights */}
-              <ul className="space-y-1.5 flex-1" aria-label={`${card.label} features`}>
+              <ul
+                className="space-y-1.5 flex-1"
+                aria-label={`${card.label} features`}
+              >
                 {card.highlights.map((highlight) => (
-                  <li key={highlight} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                    <Zap className="w-3 h-3 text-[var(--brand-gold)] shrink-0" aria-hidden="true" />
+                  <li
+                    key={highlight}
+                    className="flex items-center gap-2 text-xs text-[var(--text-secondary)]"
+                  >
+                    <Zap
+                      className="w-3 h-3 text-[var(--brand-gold)] shrink-0"
+                      aria-hidden="true"
+                    />
                     {highlight}
                   </li>
                 ))}
@@ -149,7 +186,8 @@ export function RoleSelectionPage({ onSelectRole }: RoleSelectionPageProps): Rea
         <div className="flex items-center justify-center gap-3 mt-10 text-[var(--text-tertiary)] text-xs">
           <Users className="w-3.5 h-3.5" aria-hidden="true" />
           <span>
-            You can switch roles at any time using the role switcher in the top navigation.
+            You can switch roles at any time using the role switcher in the top
+            navigation.
           </span>
         </div>
       </main>

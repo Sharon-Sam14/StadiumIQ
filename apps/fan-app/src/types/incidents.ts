@@ -3,12 +3,7 @@
 // ============================================================
 
 export type IncidentCategory =
-  | "crowd"
-  | "medical"
-  | "security"
-  | "infrastructure"
-  | "lost_item"
-  | "other";
+  "crowd" | "medical" | "security" | "infrastructure" | "lost_item" | "other";
 
 export type IncidentSeverity = "low" | "medium" | "high" | "critical";
 
@@ -35,7 +30,10 @@ export interface Incident {
 export type IncidentAction =
   | { type: "ADD_INCIDENT"; payload: Incident }
   | { type: "UPDATE_STATUS"; payload: { id: string; status: IncidentStatus } }
-  | { type: "UPDATE_SEVERITY"; payload: { id: string; severity: IncidentSeverity } };
+  | {
+      type: "UPDATE_SEVERITY";
+      payload: { id: string; severity: IncidentSeverity };
+    };
 
 // ============================================================
 // FORM TYPES

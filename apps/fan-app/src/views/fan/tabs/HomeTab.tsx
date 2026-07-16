@@ -1,7 +1,16 @@
 import React, { useState, useCallback, useEffect } from "react";
 import {
-  AlertTriangle, MapPin, MessageSquare, Ticket, ChevronRight,
-  Navigation, Clock, Users, ChevronDown, ChevronUp, Check
+  AlertTriangle,
+  MapPin,
+  MessageSquare,
+  Ticket,
+  ChevronRight,
+  Navigation,
+  Clock,
+  Users,
+  ChevronDown,
+  ChevronUp,
+  Check,
 } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Badge, AIBadge } from "@/components/ui/Badge";
@@ -18,7 +27,8 @@ const SURGE_ALERTS = [
     zone: "Gate A",
     occupancy: 92,
     severity: "high" as const,
-    message: "Gate A is at 92% capacity — all Section 200–250 fans are directed to use Gate B for faster entry.",
+    message:
+      "Gate A is at 92% capacity — all Section 200–250 fans are directed to use Gate B for faster entry.",
     recommendation: "Use Gate B",
   },
   {
@@ -26,34 +36,72 @@ const SURGE_ALERTS = [
     zone: "Concourse 3",
     occupancy: 74,
     severity: "medium" as const,
-    message: "Concourse 3 food vendor queue is moderately congested. Optimal visit window: 80th minute.",
+    message:
+      "Concourse 3 food vendor queue is moderately congested. Optimal visit window: 80th minute.",
     recommendation: "Visit after 80th min",
   },
 ];
 
 const VENDOR_QUEUE_DATA: VendorQueueInfo[] = [
-  { vendorId: "v1", name: "Halal Bites",        zone: "West Concourse, Sec 112", estimatedWaitMinutes: 3,  bestTimeNote: "Best time to visit: 80th minute" },
-  { vendorId: "v2", name: "Stadium Grill",       zone: "East Concourse, Sec 220", estimatedWaitMinutes: 7,  bestTimeNote: "Less busy after half-time whistle" },
-  { vendorId: "v3", name: "Vegan Corner",        zone: "North Plaza",             estimatedWaitMinutes: 2,  bestTimeNote: "Currently at low capacity" },
-  { vendorId: "v4", name: "FIFA Merch Cafe",     zone: "Main Lobby, Gate B",      estimatedWaitMinutes: 12, bestTimeNote: "Peak times: post-match & halftime" },
-  { vendorId: "v5", name: "Freshco Beverages",   zone: "South Concourse, Sec 310",estimatedWaitMinutes: 5,  bestTimeNote: "Optimal: first 15 mins of halftime" },
+  {
+    vendorId: "v1",
+    name: "Halal Bites",
+    zone: "West Concourse, Sec 112",
+    estimatedWaitMinutes: 3,
+    bestTimeNote: "Best time to visit: 80th minute",
+  },
+  {
+    vendorId: "v2",
+    name: "Stadium Grill",
+    zone: "East Concourse, Sec 220",
+    estimatedWaitMinutes: 7,
+    bestTimeNote: "Less busy after half-time whistle",
+  },
+  {
+    vendorId: "v3",
+    name: "Vegan Corner",
+    zone: "North Plaza",
+    estimatedWaitMinutes: 2,
+    bestTimeNote: "Currently at low capacity",
+  },
+  {
+    vendorId: "v4",
+    name: "FIFA Merch Cafe",
+    zone: "Main Lobby, Gate B",
+    estimatedWaitMinutes: 12,
+    bestTimeNote: "Peak times: post-match & halftime",
+  },
+  {
+    vendorId: "v5",
+    name: "Freshco Beverages",
+    zone: "South Concourse, Sec 310",
+    estimatedWaitMinutes: 5,
+    bestTimeNote: "Optimal: first 15 mins of halftime",
+  },
 ];
 
-const ACCESSIBILITY_OPTIONS: { need: AccessibilityNeed; label: string; detail: string }[] = [
+const ACCESSIBILITY_OPTIONS: {
+  need: AccessibilityNeed;
+  label: string;
+  detail: string;
+}[] = [
   {
     need: "wheelchair_routing",
     label: "Wheelchair Routing",
-    detail: "Accessible ramps and wide-aisle routes to your seat and facilities",
+    detail:
+      "Accessible ramps and wide-aisle routes to your seat and facilities",
   },
   {
     need: "visual_impairment",
     label: "Visual Impairment Assistance",
-    detail: "Verbal guidance and tactile orientation support from stadium volunteers",
+    detail:
+      "Verbal guidance and tactile orientation support from stadium volunteers",
   },
   {
     need: "hearing_impairment",
     label: "Hearing Impairment Support",
-    detail: "Visual alerts, written communication, and loop system zones flagged",
+    detail:
+      "Visual alerts, written communication, and loop system zones flagged",
   },
 ];
 
@@ -74,7 +122,9 @@ export const HomeTab = React.memo(function HomeTab({
   const [vendors, setVendors] = useState<VendorQueueInfo[]>([]);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const [selectedNeeds, setSelectedNeeds] = useState<AccessibilityNeed[]>([]);
-  const [needsSubmitted, setNeedsSubmitted] = useState(registeredNeeds.length > 0);
+  const [needsSubmitted, setNeedsSubmitted] = useState(
+    registeredNeeds.length > 0,
+  );
 
   useEffect(() => {
     // Simulate 1.5s load
@@ -91,8 +141,11 @@ export const HomeTab = React.memo(function HomeTab({
       setVendors((prev) =>
         prev.map((v) => ({
           ...v,
-          estimatedWaitMinutes: Math.max(1, v.estimatedWaitMinutes + Math.floor(Math.random() * 5) - 2),
-        }))
+          estimatedWaitMinutes: Math.max(
+            1,
+            v.estimatedWaitMinutes + Math.floor(Math.random() * 5) - 2,
+          ),
+        })),
       );
     }, 30000);
     return () => clearInterval(interval);
@@ -100,7 +153,7 @@ export const HomeTab = React.memo(function HomeTab({
 
   const toggleNeed = useCallback((need: AccessibilityNeed): void => {
     setSelectedNeeds((prev) =>
-      prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need]
+      prev.includes(need) ? prev.filter((n) => n !== need) : [...prev, need],
     );
   }, []);
 
@@ -116,7 +169,10 @@ export const HomeTab = React.memo(function HomeTab({
       {/* Surge Advisory Cards */}
       <section aria-label="Stadium surge advisories">
         <div className="flex items-center gap-2 mb-3">
-          <AlertTriangle className="w-4 h-4 text-[var(--brand-gold)]" aria-hidden="true" />
+          <AlertTriangle
+            className="w-4 h-4 text-[var(--brand-gold)]"
+            aria-hidden="true"
+          />
           <h2 className="font-display font-bold text-xs uppercase tracking-widest text-[var(--text-secondary)]">
             Live Surge Advisories
           </h2>
@@ -137,12 +193,19 @@ export const HomeTab = React.memo(function HomeTab({
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-xs text-[var(--text-primary)]">{alert.zone}</span>
-                  <Badge variant={alert.severity === "high" ? "danger" : "warning"} size="xs">
+                  <span className="font-bold text-xs text-[var(--text-primary)]">
+                    {alert.zone}
+                  </span>
+                  <Badge
+                    variant={alert.severity === "high" ? "danger" : "warning"}
+                    size="xs"
+                  >
                     {alert.occupancy}% Full
                   </Badge>
                 </div>
-                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{alert.message}</p>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  {alert.message}
+                </p>
                 <p className="text-[10px] font-bold text-[var(--brand-gold)] mt-1">
                   AI Recommendation: {alert.recommendation}
                 </p>
@@ -170,7 +233,10 @@ export const HomeTab = React.memo(function HomeTab({
               MetLife Stadium — Match 82
             </p>
           </div>
-          <Ticket className="w-6 h-6 text-[var(--brand-gold)]" aria-hidden="true" />
+          <Ticket
+            className="w-6 h-6 text-[var(--brand-gold)]"
+            aria-hidden="true"
+          />
         </div>
         <div className="grid grid-cols-4 gap-2 border-t border-[var(--border-subtle)] pt-3">
           {[
@@ -180,12 +246,19 @@ export const HomeTab = React.memo(function HomeTab({
             { label: "GATE", value: "B" },
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
-              <p className="text-[9px] text-[var(--text-tertiary)] uppercase">{label}</p>
-              <p className="font-display font-bold text-base text-[var(--text-primary)]">{value}</p>
+              <p className="text-[9px] text-[var(--text-tertiary)] uppercase">
+                {label}
+              </p>
+              <p className="font-display font-bold text-base text-[var(--text-primary)]">
+                {value}
+              </p>
             </div>
           ))}
         </div>
-        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" aria-hidden="true" />
+        <ChevronRight
+          className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]"
+          aria-hidden="true"
+        />
       </button>
 
       {/* Quick Actions */}
@@ -196,11 +269,18 @@ export const HomeTab = React.memo(function HomeTab({
           aria-label="Open indoor navigation map"
         >
           <div className="w-10 h-10 rounded-lg bg-[var(--brand-gold)]/10 flex items-center justify-center shrink-0">
-            <Navigation className="w-5 h-5 text-[var(--brand-gold)]" aria-hidden="true" />
+            <Navigation
+              className="w-5 h-5 text-[var(--brand-gold)]"
+              aria-hidden="true"
+            />
           </div>
           <div className="text-left">
-            <p className="text-xs font-bold text-[var(--text-primary)]">Indoor Nav</p>
-            <p className="text-[10px] text-[var(--text-tertiary)]">Find your way</p>
+            <p className="text-xs font-bold text-[var(--text-primary)]">
+              Indoor Nav
+            </p>
+            <p className="text-[10px] text-[var(--text-tertiary)]">
+              Find your way
+            </p>
           </div>
         </button>
 
@@ -210,11 +290,18 @@ export const HomeTab = React.memo(function HomeTab({
           aria-label="Open AI concierge assistant"
         >
           <div className="w-10 h-10 rounded-lg bg-[var(--brand-green-deep)]/40 flex items-center justify-center shrink-0">
-            <MessageSquare className="w-5 h-5 text-[var(--brand-gold)]" aria-hidden="true" />
+            <MessageSquare
+              className="w-5 h-5 text-[var(--brand-gold)]"
+              aria-hidden="true"
+            />
           </div>
           <div className="text-left">
-            <p className="text-xs font-bold text-[var(--text-primary)]">AI Concierge</p>
-            <p className="text-[10px] text-[var(--text-tertiary)]">50+ languages</p>
+            <p className="text-xs font-bold text-[var(--text-primary)]">
+              AI Concierge
+            </p>
+            <p className="text-[10px] text-[var(--text-tertiary)]">
+              50+ languages
+            </p>
           </div>
         </button>
       </div>
@@ -226,16 +313,26 @@ export const HomeTab = React.memo(function HomeTab({
         aria-label="Open post-match transportation planner"
       >
         <div className="flex items-center gap-3">
-          <MapPin className="w-5 h-5 text-[var(--brand-gold)]" aria-hidden="true" />
+          <MapPin
+            className="w-5 h-5 text-[var(--brand-gold)]"
+            aria-hidden="true"
+          />
           <div className="text-left">
-            <p className="text-sm font-bold text-[var(--text-primary)]">Plan My Exit</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">
+              Plan My Exit
+            </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <AIBadge label="AI-Powered" />
-              <span className="text-[10px] text-[var(--text-tertiary)]">Post-match routes</span>
+              <span className="text-[10px] text-[var(--text-tertiary)]">
+                Post-match routes
+              </span>
             </div>
           </div>
         </div>
-        <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" aria-hidden="true" />
+        <ChevronRight
+          className="w-4 h-4 text-[var(--text-tertiary)]"
+          aria-hidden="true"
+        />
       </button>
 
       {/* Vendor Queue Intelligence */}
@@ -244,7 +341,9 @@ export const HomeTab = React.memo(function HomeTab({
         headerRight={
           <div className="flex items-center gap-1.5">
             <AIBadge />
-            <span className="text-[9px] text-[var(--text-tertiary)]">Updates every 30s</span>
+            <span className="text-[9px] text-[var(--text-tertiary)]">
+              Updates every 30s
+            </span>
           </div>
         }
       >
@@ -262,20 +361,34 @@ export const HomeTab = React.memo(function HomeTab({
                 className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--bg-elevated)]/50 border border-[var(--border-subtle)]"
               >
                 <div>
-                  <p className="text-xs font-semibold text-[var(--text-primary)]">{vendor.name}</p>
-                  <p className="text-[10px] text-[var(--text-tertiary)]">{vendor.zone}</p>
+                  <p className="text-xs font-semibold text-[var(--text-primary)]">
+                    {vendor.name}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-tertiary)]">
+                    {vendor.zone}
+                  </p>
                 </div>
                 <div className="text-right">
                   <div className="flex items-center gap-1 justify-end">
-                    <Clock className="w-3 h-3 text-[var(--text-tertiary)]" aria-hidden="true" />
-                    <span className={`text-xs font-bold ${
-                      vendor.estimatedWaitMinutes <= 4 ? "text-green-400" :
-                      vendor.estimatedWaitMinutes <= 8 ? "text-yellow-400" : "text-red-400"
-                    }`}>
+                    <Clock
+                      className="w-3 h-3 text-[var(--text-tertiary)]"
+                      aria-hidden="true"
+                    />
+                    <span
+                      className={`text-xs font-bold ${
+                        vendor.estimatedWaitMinutes <= 4
+                          ? "text-green-400"
+                          : vendor.estimatedWaitMinutes <= 8
+                            ? "text-yellow-400"
+                            : "text-red-400"
+                      }`}
+                    >
                       ~{vendor.estimatedWaitMinutes} min
                     </span>
                   </div>
-                  <p className="text-[9px] text-[var(--text-tertiary)] mt-0.5">{vendor.bestTimeNote}</p>
+                  <p className="text-[9px] text-[var(--text-tertiary)] mt-0.5">
+                    {vendor.bestTimeNote}
+                  </p>
                 </div>
               </div>
             ))}
@@ -292,26 +405,44 @@ export const HomeTab = React.memo(function HomeTab({
           aria-controls="accessibility-panel"
         >
           <div className="flex items-center gap-3">
-            <Users className="w-4 h-4 text-[var(--brand-gold)]" aria-hidden="true" />
+            <Users
+              className="w-4 h-4 text-[var(--brand-gold)]"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-sm font-bold text-[var(--text-primary)]">Accessibility Needs</p>
+              <p className="text-sm font-bold text-[var(--text-primary)]">
+                Accessibility Needs
+              </p>
               <p className="text-[10px] text-[var(--text-tertiary)]">
-                {needsSubmitted ? "Registered — your volunteer has been notified" : "Register your needs so we can assist you"}
+                {needsSubmitted
+                  ? "Registered — your volunteer has been notified"
+                  : "Register your needs so we can assist you"}
               </p>
             </div>
           </div>
-          {needsSubmitted
-            ? <Check className="w-4 h-4 text-green-400" aria-hidden="true" />
-            : accessibilityOpen
-            ? <ChevronUp className="w-4 h-4 text-[var(--text-tertiary)]" aria-hidden="true" />
-            : <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" aria-hidden="true" />
-          }
+          {needsSubmitted ? (
+            <Check className="w-4 h-4 text-green-400" aria-hidden="true" />
+          ) : accessibilityOpen ? (
+            <ChevronUp
+              className="w-4 h-4 text-[var(--text-tertiary)]"
+              aria-hidden="true"
+            />
+          ) : (
+            <ChevronDown
+              className="w-4 h-4 text-[var(--text-tertiary)]"
+              aria-hidden="true"
+            />
+          )}
         </button>
 
         {accessibilityOpen && !needsSubmitted && (
-          <div id="accessibility-panel" className="px-4 pb-4 space-y-3 border-t border-[var(--border-subtle)]">
+          <div
+            id="accessibility-panel"
+            className="px-4 pb-4 space-y-3 border-t border-[var(--border-subtle)]"
+          >
             <p className="text-xs text-[var(--text-secondary)] mt-3">
-              Select all that apply. Your designated section volunteer (Sec 200) will be notified immediately.
+              Select all that apply. Your designated section volunteer (Sec 200)
+              will be notified immediately.
             </p>
             {ACCESSIBILITY_OPTIONS.map(({ need, label, detail }) => (
               <label
@@ -326,8 +457,12 @@ export const HomeTab = React.memo(function HomeTab({
                   aria-label={label}
                 />
                 <div>
-                  <p className="text-xs font-semibold text-[var(--text-primary)]">{label}</p>
-                  <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">{detail}</p>
+                  <p className="text-xs font-semibold text-[var(--text-primary)]">
+                    {label}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">
+                    {detail}
+                  </p>
                 </div>
               </label>
             ))}

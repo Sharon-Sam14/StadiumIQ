@@ -45,7 +45,7 @@ export const SkeletonCard = React.memo(function SkeletonCard({
       className={clsx(
         "rounded-xl border p-5 space-y-3",
         "bg-[var(--bg-surface)] border-[var(--border-subtle)]",
-        className
+        className,
       )}
       role="status"
       aria-label="Loading content..."
@@ -62,7 +62,10 @@ export const SkeletonCard = React.memo(function SkeletonCard({
         {Array.from({ length: lines }).map((_, i) => (
           <Skeleton
             key={i}
-            className={clsx("h-2.5 rounded", i === lines - 1 ? "w-3/5" : "w-full")}
+            className={clsx(
+              "h-2.5 rounded",
+              i === lines - 1 ? "w-3/5" : "w-full",
+            )}
           />
         ))}
       </div>
@@ -85,7 +88,12 @@ export const SkeletonTableRow = React.memo(function SkeletonTableRow({
     <tr role="status" aria-label="Loading row...">
       {Array.from({ length: columns }).map((_, i) => (
         <td key={i} className="py-3 px-4">
-          <Skeleton className={clsx("h-3 rounded", i === 0 ? "w-16" : i === 1 ? "w-full" : "w-14")} />
+          <Skeleton
+            className={clsx(
+              "h-3 rounded",
+              i === 0 ? "w-16" : i === 1 ? "w-full" : "w-14",
+            )}
+          />
         </td>
       ))}
     </tr>
@@ -98,7 +106,11 @@ export const SkeletonTableRow = React.memo(function SkeletonTableRow({
 
 export function LoadingDots(): React.JSX.Element {
   return (
-    <span className="inline-flex gap-1 items-center" aria-label="Loading" aria-busy="true">
+    <span
+      className="inline-flex gap-1 items-center"
+      aria-label="Loading"
+      aria-busy="true"
+    >
       <span className="loading-dot" />
       <span className="loading-dot" />
       <span className="loading-dot" />

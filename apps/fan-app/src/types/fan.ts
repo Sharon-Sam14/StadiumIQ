@@ -7,11 +7,10 @@ export type UserRole = "fan" | "organizer" | "volunteer" | null;
 export type Language = "en" | "ar" | "fr" | "es" | "pt";
 
 export type AccessibilityNeed =
-  | "wheelchair_routing"
-  | "visual_impairment"
-  | "hearing_impairment";
+  "wheelchair_routing" | "visual_impairment" | "hearing_impairment";
 
-export type WasteCategory = "recyclable" | "metal" | "paper" | "compost" | "general";
+export type WasteCategory =
+  "recyclable" | "metal" | "paper" | "compost" | "general";
 
 export interface WasteClassification {
   readonly category: WasteCategory;
@@ -56,7 +55,14 @@ export interface EcoBalance {
 }
 
 export type EcoAction =
-  | { type: "ADD_POINTS"; payload: { points: number; xp: number; transactionType: EcoTransaction["type"] } }
+  | {
+      type: "ADD_POINTS";
+      payload: {
+        points: number;
+        xp: number;
+        transactionType: EcoTransaction["type"];
+      };
+    }
   | { type: "SPEND_POINTS"; payload: { points: number; itemId: string } }
   | { type: "COMPLETE_MISSION"; payload: { missionId: string } }
   | { type: "EARN_BADGE"; payload: EcoBadge };

@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from "react";
 import { Home, Navigation, MessageSquare, Ticket, Leaf } from "lucide-react";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
-import { HomeTab }      from "./tabs/HomeTab";
-import { NavigateTab }  from "./tabs/NavigateTab";
+import { HomeTab } from "./tabs/HomeTab";
+import { NavigateTab } from "./tabs/NavigateTab";
 import { AssistantTab } from "./tabs/AssistantTab";
-import { TicketTab }    from "./tabs/TicketTab";
-import { EcoEarnTab }   from "./tabs/EcoEarnTab";
+import { TicketTab } from "./tabs/TicketTab";
+import { EcoEarnTab } from "./tabs/EcoEarnTab";
 import { TransportPlannerModal } from "./modals/TransportPlannerModal";
 import type { UseEcoPointsReturn } from "@/hooks/useEcoPoints";
 import type { AccessibilityNeed } from "@/types/fan";
@@ -25,11 +25,36 @@ interface TabDef {
 }
 
 const TABS: readonly TabDef[] = [
-  { id: "home",      label: "Home",         shortLabel: "Home",    icon: <Home         className="w-4 h-4" aria-hidden="true" /> },
-  { id: "navigate",  label: "Navigate",     shortLabel: "Map",     icon: <Navigation   className="w-4 h-4" aria-hidden="true" /> },
-  { id: "assistant", label: "AI Assistant", shortLabel: "Chat",    icon: <MessageSquare className="w-4 h-4" aria-hidden="true" /> },
-  { id: "ticket",    label: "My Ticket",    shortLabel: "Ticket",  icon: <Ticket        className="w-4 h-4" aria-hidden="true" /> },
-  { id: "eco",       label: "Eco Earn",     shortLabel: "Eco",     icon: <Leaf          className="w-4 h-4" aria-hidden="true" /> },
+  {
+    id: "home",
+    label: "Home",
+    shortLabel: "Home",
+    icon: <Home className="w-4 h-4" aria-hidden="true" />,
+  },
+  {
+    id: "navigate",
+    label: "Navigate",
+    shortLabel: "Map",
+    icon: <Navigation className="w-4 h-4" aria-hidden="true" />,
+  },
+  {
+    id: "assistant",
+    label: "AI Assistant",
+    shortLabel: "Chat",
+    icon: <MessageSquare className="w-4 h-4" aria-hidden="true" />,
+  },
+  {
+    id: "ticket",
+    label: "My Ticket",
+    shortLabel: "Ticket",
+    icon: <Ticket className="w-4 h-4" aria-hidden="true" />,
+  },
+  {
+    id: "eco",
+    label: "Eco Earn",
+    shortLabel: "Eco",
+    icon: <Leaf className="w-4 h-4" aria-hidden="true" />,
+  },
 ] as const;
 
 interface FanPortalProps {

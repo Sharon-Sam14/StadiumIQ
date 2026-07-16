@@ -4,8 +4,12 @@ import { db } from "@/utils/firebase";
 import { WebSocketEventSchema, type WebSocketEvent } from "@/types/events";
 
 interface UseWebSocketOptions {
-  onSafetyBroadcast?: (event: WebSocketEvent & { type: "SAFETY_BROADCAST" }) => void;
-  onIncidentCreated?: (event: WebSocketEvent & { type: "INCIDENT_CREATED" }) => void;
+  onSafetyBroadcast?: (
+    event: WebSocketEvent & { type: "SAFETY_BROADCAST" },
+  ) => void;
+  onIncidentCreated?: (
+    event: WebSocketEvent & { type: "INCIDENT_CREATED" },
+  ) => void;
   broadcastIntervalMs?: number;
   incidentIntervalMs?: number;
 }
@@ -15,7 +19,9 @@ interface UseWebSocketReturn {
   lastEvent: WebSocketEvent | null;
 }
 
-export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketReturn {
+export function useWebSocket(
+  options: UseWebSocketOptions = {},
+): UseWebSocketReturn {
   const { onSafetyBroadcast, onIncidentCreated } = options;
 
   const [isConnected, setIsConnected] = useState(false);
@@ -24,13 +30,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const onSafetyRef = useRef(onSafetyBroadcast);
   const onIncidentRef = useRef(onIncidentCreated);
 
-  useEffect(() => { onSafetyRef.current = onSafetyBroadcast; }, [onSafetyBroadcast]);
-  useEffect(() => { onIncidentRef.current = onIncidentCreated; }, [onIncidentCreated]);
+  useEffect(() => {
+    onSafetyRef.current = onSafetyBroadcast;
+  }, [onSafetyBroadcast]);
+  useEffect(() => {
+    onIncidentRef.current = onIncidentCreated;
+  }, [onIncidentCreated]);
 
   const dispatchEvent = useCallback((rawPayload: unknown): void => {
     const parseResult = WebSocketEventSchema.safeParse(rawPayload);
     if (!parseResult.success) {
-      console.warn("[WebSocket/Firestore] Malformed event discarded:", parseResult.error.issues);
+      console.warn(
+        "[WebSocket/Firestore] Malformed event discarded:",
+        parseResult.error.issues,
+      );
       return;
     }
     const event = parseResult.data;
@@ -62,29 +75,33 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
               status: data.status || "active",
               zone: data.zone || "General",
               reportedBy: data.reportedBy || "fan",
-              createdAt: data.createdAt || new Date().toISOString()
-            }
+              createdAt: data.createdAt || new Date().toISOString(),
+            },
           });
         }
       });
     });
 
     // Also listen to sustainability metrics for price drop state updates
-    const unsubMetrics = onSnapshot(collection(db, "sustainability_metrics"), (snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        const data = change.doc.data();
-        if (change.doc.id === "price_drop_state" && data.priceDropActive) {
-          dispatchEvent({
-            type: "SAFETY_BROADCAST",
-            id: `BC-${Date.now()}`,
-            title: "⚡ Concession Price Drop Alert",
-            message: data.message || "Surplus organic hotdogs cost reduced by 50%!",
-            severity: "medium",
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
-    });
+    const unsubMetrics = onSnapshot(
+      collection(db, "sustainability_metrics"),
+      (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          const data = change.doc.data();
+          if (change.doc.id === "price_drop_state" && data.priceDropActive) {
+            dispatchEvent({
+              type: "SAFETY_BROADCAST",
+              id: `BC-${Date.now()}`,
+              title: "⚡ Concession Price Drop Alert",
+              message:
+                data.message || "Surplus organic hotdogs cost reduced by 50%!",
+              severity: "medium",
+              timestamp: new Date().toISOString(),
+            });
+          }
+        });
+      },
+    );
 
     return () => {
       unsub();

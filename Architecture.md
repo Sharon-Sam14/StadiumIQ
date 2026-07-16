@@ -1,6 +1,7 @@
 # Technical Architecture Documentation — StadiumIQ
 
 ## 1. High-Level Architecture
+
 StadiumIQ is built as a serverless, decoupled monorepo stack. The frontends are hosted on **Vercel** and connect directly to **Google Firebase** managed backends.
 
 ```mermaid
@@ -36,17 +37,18 @@ promptwar/
 
 ## 3. Database Design & Firestore Collections
 
-* **`users`**: Auth account details.
-* **`venues`**: Match stadium geographical coordinates.
-* **`matches`**: Kickoff schedules and attendances.
-* **`tickets`**: Gate section and barcode values.
-* **`incidents`**: Location, severity, reported status.
-* **`leaderboards`**: User points, transactions log, badges.
-* **`rewards`**: Redeemable concessions store inventory.
+- **`users`**: Auth account details.
+- **`venues`**: Match stadium geographical coordinates.
+- **`matches`**: Kickoff schedules and attendances.
+- **`tickets`**: Gate section and barcode values.
+- **`incidents`**: Location, severity, reported status.
+- **`leaderboards`**: User points, transactions log, badges.
+- **`rewards`**: Redeemable concessions store inventory.
 
 ---
 
 ## 4. Authentication Flow
+
 ```mermaid
 sequenceClient -> Server (Firebase Auth)
   Client ->> Auth: SignIn(Email, Password)
@@ -57,8 +59,9 @@ sequenceClient -> Server (Firebase Auth)
 ---
 
 ## 5. State Management & Component Hierarchy
-* **State Management**: Uses standard React `useState`, `useReducer`, and `useContext` hooks. Context listeners hook into Firestore paths (`useIncidents`, `useEcoPoints`, `useWebSocket`) for automatic client-side updates.
-* **Component Hierarchies**:
+
+- **State Management**: Uses standard React `useState`, `useReducer`, and `useContext` hooks. Context listeners hook into Firestore paths (`useIncidents`, `useEcoPoints`, `useWebSocket`) for automatic client-side updates.
+- **Component Hierarchies**:
   - Fan App: `App` -> `MainTabs` -> [`EcoEarnTab` | `NavigationTab` | `AssistantTab` | `TicketTab`].
   - Volunteer Portal: `VolunteerPortal` -> [`IncidentForm` | `TaskChecklist` | `BriefingPanel`].
   - Command Center: `page.tsx` -> [`MetricsOverview` | `SurgeForecast` | `PricingConsole`].

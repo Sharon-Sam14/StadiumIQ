@@ -7,11 +7,16 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 // Default configuration with fallback properties for local emulator execution
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "mock-api-key-stadiumiq",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "stadiumiq-serverless.firebaseapp.com",
+  authDomain:
+    import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ||
+    "stadiumiq-serverless.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "stadiumiq-serverless",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "stadiumiq-serverless.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234:web:abcd"
+  storageBucket:
+    import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ||
+    "stadiumiq-serverless.appspot.com",
+  messagingSenderId:
+    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234:web:abcd",
 };
 
 const app = initializeApp(firebaseConfig);

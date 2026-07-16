@@ -14,15 +14,15 @@ interface SafetyBannerProps {
 }
 
 const SEVERITY_STYLES: Record<SafetyBroadcastEvent["severity"], string> = {
-  high:   "bg-red-900/40 border-red-500/50 text-red-200",
+  high: "bg-red-900/40 border-red-500/50 text-red-200",
   medium: "bg-yellow-900/40 border-yellow-500/50 text-yellow-200",
-  low:    "bg-green-900/40 border-green-500/50 text-green-200",
+  low: "bg-green-900/40 border-green-500/50 text-green-200",
 };
 
 const SEVERITY_LABELS: Record<SafetyBroadcastEvent["severity"], string> = {
-  high:   "HIGH PRIORITY",
+  high: "HIGH PRIORITY",
   medium: "ADVISORY",
-  low:    "INFO",
+  low: "INFO",
 };
 
 export const SafetyBanner = React.memo(function SafetyBanner({
@@ -57,7 +57,10 @@ export const SafetyBanner = React.memo(function SafetyBanner({
         <span>{broadcast.message}</span>
       </div>
       <button
-        onClick={() => { setVisible(false); onDismiss(); }}
+        onClick={() => {
+          setVisible(false);
+          onDismiss();
+        }}
         className="shrink-0 p-1 rounded hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2"
         aria-label="Dismiss safety alert"
       >

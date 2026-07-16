@@ -16,7 +16,8 @@ const TRANSPORT_ROUTES: TransportRoute[] = [
     mode: "NJ Transit Train",
     destination: "Newark Penn → NYC Penn Station",
     estimatedMinutes: 38,
-    summary: "AI Recommended: Gate C has the lowest predicted congestion (2.4 min wait). NJ Transit departing Meadowlands Station at 22:45. Arrives NYC Penn Station by 23:23.",
+    summary:
+      "AI Recommended: Gate C has the lowest predicted congestion (2.4 min wait). NJ Transit departing Meadowlands Station at 22:45. Arrives NYC Penn Station by 23:23.",
   },
   {
     id: "route-2",
@@ -26,7 +27,8 @@ const TRANSPORT_ROUTES: TransportRoute[] = [
     mode: "Express Shuttle Bus",
     destination: "MetLife → Times Square",
     estimatedMinutes: 55,
-    summary: "Departs from Bus Bay 3 (Gate B side). WiFi-equipped coaches. Fare included in ticket for this match. Drop-off at 42nd St / 7th Ave.",
+    summary:
+      "Departs from Bus Bay 3 (Gate B side). WiFi-equipped coaches. Fare included in ticket for this match. Drop-off at 42nd St / 7th Ave.",
   },
   {
     id: "route-3",
@@ -36,13 +38,14 @@ const TRANSPORT_ROUTES: TransportRoute[] = [
     mode: "Rideshare (Uber/Lyft)",
     destination: "Direct to destination",
     estimatedMinutes: 45,
-    summary: "Pickup zone at Lot 15 (Gate A, north). High demand expected — surcharge likely. Ride requests may take 12–20 minutes to fulfil. Budget option: carpool via Lyft.",
+    summary:
+      "Pickup zone at Lot 15 (Gate A, north). High demand expected — surcharge likely. Ride requests may take 12–20 minutes to fulfil. Budget option: carpool via Lyft.",
   },
 ];
 
 const MODE_ICONS: Record<string, React.ReactNode> = {
-  "NJ Transit Train":    <Train className="w-5 h-5" aria-hidden="true" />,
-  "Express Shuttle Bus": <Bus   className="w-5 h-5" aria-hidden="true" />,
+  "NJ Transit Train": <Train className="w-5 h-5" aria-hidden="true" />,
+  "Express Shuttle Bus": <Bus className="w-5 h-5" aria-hidden="true" />,
   "Rideshare (Uber/Lyft)": <Car className="w-5 h-5" aria-hidden="true" />,
 };
 
@@ -71,14 +74,15 @@ export function TransportPlannerModal({
       aria-modal="true"
       aria-label="Post-match transportation planner"
     >
-      <div
-        className="w-full max-w-lg rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden max-h-[92vh] flex flex-col animate-slide-up shadow-2xl"
-      >
+      <div className="w-full max-w-lg rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] overflow-hidden max-h-[92vh] flex flex-col animate-slide-up shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-subtle)] shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[var(--brand-gold)]" aria-hidden="true" />
+              <MapPin
+                className="w-4 h-4 text-[var(--brand-gold)]"
+                aria-hidden="true"
+              />
               <h2 className="font-display font-bold text-sm text-[var(--text-primary)]">
                 Post-Match Exit Planner
               </h2>
@@ -95,16 +99,23 @@ export function TransportPlannerModal({
             className="p-1.5 rounded-lg hover:bg-[var(--bg-elevated)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             aria-label="Close transport planner"
           >
-            <X className="w-4 h-4 text-[var(--text-secondary)]" aria-hidden="true" />
+            <X
+              className="w-4 h-4 text-[var(--text-secondary)]"
+              aria-hidden="true"
+            />
           </button>
         </div>
 
         {/* AI Summary */}
         <div className="px-5 py-3 bg-[var(--brand-gold)]/5 border-b border-[var(--brand-gold)]/15 shrink-0">
           <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
-            <strong className="text-[var(--brand-gold)]">AI Analysis:</strong> Based on crowd flow predictions for tonight's match,{" "}
-            <strong className="text-[var(--text-primary)]">Gate C exits are 72% less congested</strong> than Gate A.
-            NJ Transit post-match service adds 8 extra trains. Rideshare demand peaks 15 minutes after final whistle.
+            <strong className="text-[var(--brand-gold)]">AI Analysis:</strong>{" "}
+            Based on crowd flow predictions for tonight's match,{" "}
+            <strong className="text-[var(--text-primary)]">
+              Gate C exits are 72% less congested
+            </strong>{" "}
+            than Gate A. NJ Transit post-match service adds 8 extra trains.
+            Rideshare demand peaks 15 minutes after final whistle.
           </p>
         </div>
 
@@ -134,31 +145,46 @@ export function TransportPlannerModal({
                         RECOMMENDED
                       </span>
                     )}
-                    <span className="text-xs font-bold text-[var(--text-primary)] truncate">{route.mode}</span>
+                    <span className="text-xs font-bold text-[var(--text-primary)] truncate">
+                      {route.mode}
+                    </span>
                   </div>
-                  <p className="text-[10px] text-[var(--text-tertiary)] truncate">{route.destination}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] truncate">
+                    {route.destination}
+                  </p>
                 </div>
               </div>
 
               {/* Metrics */}
               <div className="flex gap-4 mb-3">
                 <div className="flex items-center gap-1.5">
-                  <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
-                    route.gateWaitMinutes <= 4 ? "text-green-400 bg-green-900/20 border-green-500/30" :
-                    route.gateWaitMinutes <= 8 ? "text-yellow-400 bg-yellow-900/20 border-yellow-500/30" :
-                    "text-red-400 bg-red-900/20 border-red-500/30"
-                  }`}>
+                  <span
+                    className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
+                      route.gateWaitMinutes <= 4
+                        ? "text-green-400 bg-green-900/20 border-green-500/30"
+                        : route.gateWaitMinutes <= 8
+                          ? "text-yellow-400 bg-yellow-900/20 border-yellow-500/30"
+                          : "text-red-400 bg-red-900/20 border-red-500/30"
+                    }`}
+                  >
                     Gate {route.exitGate} — {route.gateWaitMinutes} min wait
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-[var(--text-tertiary)]" aria-hidden="true" />
-                  <span className="text-[10px] font-bold text-[var(--text-primary)]">~{route.estimatedMinutes} min total</span>
+                  <Clock
+                    className="w-3 h-3 text-[var(--text-tertiary)]"
+                    aria-hidden="true"
+                  />
+                  <span className="text-[10px] font-bold text-[var(--text-primary)]">
+                    ~{route.estimatedMinutes} min total
+                  </span>
                 </div>
               </div>
 
               {/* AI Summary */}
-              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">{route.summary}</p>
+              <p className="text-[10px] text-[var(--text-secondary)] leading-relaxed">
+                {route.summary}
+              </p>
             </button>
           ))}
         </div>

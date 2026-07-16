@@ -1,32 +1,48 @@
-# StadiumIQ Serverless Deployment Guide
+# Technical Architecture & Deployment Documentation — StadiumIQ
 
-This guide covers the deployment workflow for StadiumIQ's serverless components.
+## 🏗️ High-Level Architecture
 
----
+StadiumIQ is built as a serverless, decoupled monorepo stack. The three frontends (Fan Portal, Volunteer Portal, Command Center) are hosted on **Vercel** and connect directly to **Google Firebase** managed backends.
 
-## 1. Backend Serverless Deployment (Firebase)
+```mermaid
+graph TD
+  FanClient[Fan PWA - Vite] -->|Realtime snapshots| Firestore[(Cloud Firestore)]
+  VolunteerClient[Volunteer Portal - Vite] -->|Write Incidents| Firestore
+  ManagerClient[Command Center - NextJS] -->|Analytics / Alerts| Firestore
 
-Deploy the Cloud Functions, Firestore rules, and indexes:
-
-### Set Gemini Key Secret
-```bash
-firebase functions:secrets:set GEMINI_API_KEY="your-google-ai-studio-key"
-```
-
-### Deploy to Live Project
-```bash
-firebase deploy
+  FanClient -->|Callable request| CloudFunc[Firebase Cloud Functions]
+  CloudFunc -->|Gemini API| Gemini[Google AI Gemini Flash]
 ```
 
 ---
 
-## 2. Frontend Hosting Deployment (Vercel)
+## 🛠️ Monorepo Workspaces Layout
 
-Deploy the Fan PWA, Volunteer portal, and Operations Command Center to **Vercel**:
+```text
+promptwar/
+├── apps/
+│   ├── command-center/         # Next.js 14 Operations Console
+│   ├── fan-app/                # Vite React Fan PWA
+│   └── volunteer-portal/       # Vite React Volunteer portal
+├── packages/
+│   ├── tsconfig/               # Shared tsconfig configurations
+│   └── eslint-config/          # Shared ESLint rule configurations
+├── functions/                  # Firebase Cloud Functions (Node/TS)
+├── firebase.json               # Firebase project configuration
+├── firestore.rules             # Database read/write access policies
+└── storage.rules               # Storage bucket permissions
+```
 
-1. Log in to Vercel and import your project repository.
-2. Link the following workspaces:
-   - **Fan Portal PWA**: Set root to `apps/fan-app`. Framework preset: `Vite`. Output: `dist`.
-   - **Volunteer Portal**: Set root to `apps/volunteer-portal`. Framework preset: `Vite`. Output: `dist`.
-   - **Command Center**: Set root to `apps/command-center`. Framework preset: `Next.js`. Output: `.next`.
-3. Input client environment keys inside your Vercel project configuration dashboard (see `ENVIRONMENT_VARIABLES.md`).
+---
+
+## 🚀 Deployment Overview
+
+- **Hosting**: Vercel (Hobby Free Tier)
+- **Backend**: Google Firebase Spark (Free Tier)
+- **AI Engine**: Google AI Studio (Free Gemini API Key)
+
+For detailed step-by-step instructions, see the following guides:
+
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)**: Beginner step-by-step credentials and deployment guides.
+- **[VERCEL_SETUP.md](./VERCEL_SETUP.md)**: Vercel monorepo configuration instructions.
+- **[FIREBASE_SETUP.md](./FIREBASE_SETUP.md)**: Detailed Firebase service definitions and configuration rules.

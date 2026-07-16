@@ -25,9 +25,15 @@ export interface Point2D {
  * @returns Estimated {x, y} position, clamped to [5, 95] range
  */
 export function triangulate(
-  x1: number, y1: number, d1: number,
-  x2: number, y2: number, d2: number,
-  x3: number, y3: number, d3: number
+  x1: number,
+  y1: number,
+  d1: number,
+  x2: number,
+  y2: number,
+  d2: number,
+  x3: number,
+  y3: number,
+  d3: number,
 ): Point2D {
   // Coefficients from linearized circle equations:
   // (x - x1)^2 + (y - y1)^2 = d1^2
@@ -91,7 +97,7 @@ export function bezierPoint(
   p0: Point2D,
   p1: Point2D,
   p2: Point2D,
-  t: number
+  t: number,
 ): Point2D {
   const oneMinusT = 1 - t;
   return {

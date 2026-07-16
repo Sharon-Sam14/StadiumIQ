@@ -47,7 +47,10 @@ export const GoalCelebration = React.memo(function GoalCelebration({
       role="presentation"
     >
       {/* Upward shooting ball */}
-      <div className="absolute animate-goal-shoot" style={{ transformOrigin: "center" }}>
+      <div
+        className="absolute animate-goal-shoot"
+        style={{ transformOrigin: "center" }}
+      >
         <FootballIcon size={40} />
       </div>
 
@@ -56,13 +59,15 @@ export const GoalCelebration = React.memo(function GoalCelebration({
         <svg
           key={spark.id}
           className="absolute animate-spark"
-          style={{
-            "--tx": `${spark.tx}px`,
-            "--ty": `${spark.ty}px`,
-            width: 8,
-            height: 8,
-            willChange: "transform, opacity",
-          } as React.CSSProperties}
+          style={
+            {
+              "--tx": `${spark.tx}px`,
+              "--ty": `${spark.ty}px`,
+              width: 8,
+              height: 8,
+              willChange: "transform, opacity",
+            } as React.CSSProperties
+          }
           viewBox="0 0 10 10"
           aria-hidden="true"
         >

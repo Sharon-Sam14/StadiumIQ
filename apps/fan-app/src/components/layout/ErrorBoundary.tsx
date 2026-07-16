@@ -16,7 +16,10 @@ interface ErrorBoundaryProps {
   readonly viewName?: string;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, errorMessage: "" };
@@ -31,7 +34,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
     // Log without exposing stack trace to users
-    console.error("[ErrorBoundary] Caught error:", error.message, info.componentStack);
+    console.error(
+      "[ErrorBoundary] Caught error:",
+      error.message,
+      info.componentStack,
+    );
   }
 
   handleRetry = (): void => {
@@ -53,10 +60,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <AlertTriangle className="w-7 h-7 text-red-400" aria-hidden="true" />
         </div>
         <h2 className="font-display font-bold text-lg text-[var(--text-primary)] mb-2">
-          {this.props.viewName ? `${this.props.viewName} Error` : "Something went wrong"}
+          {this.props.viewName
+            ? `${this.props.viewName} Error`
+            : "Something went wrong"}
         </h2>
         <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-sm">
-          This view encountered an unexpected error. Your data is safe — please retry or switch roles.
+          This view encountered an unexpected error. Your data is safe — please
+          retry or switch roles.
         </p>
         <button
           onClick={this.handleRetry}

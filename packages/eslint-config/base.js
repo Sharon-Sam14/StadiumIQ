@@ -20,7 +20,7 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     "no-console": ["warn", { allow: ["warn", "error"] }],
     "import/no-cycle": "error",
-    "eqeqeq": ["error", "always"],
+    eqeqeq: ["error", "always"],
     "no-duplicate-imports": "error",
   },
   ignorePatterns: ["dist", "build", ".next", "node_modules"],

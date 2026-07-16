@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { FLOATING_BALLS_COUNT, PULSE_THRESHOLDS } from "@/utils/animationConstants";
+import {
+  FLOATING_BALLS_COUNT,
+  PULSE_THRESHOLDS,
+} from "@/utils/animationConstants";
 import { useAnimationTrigger } from "@/hooks/useAnimationTrigger";
 
 // ============================================================

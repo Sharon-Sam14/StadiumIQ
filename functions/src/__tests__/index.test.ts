@@ -6,47 +6,53 @@ vi.mock("firebase-admin", () => {
   const mockBatchSet = vi.fn();
   const mockBatch = vi.fn(() => ({
     set: mockBatchSet,
-    commit: mockBatchCommit
+    commit: mockBatchCommit,
   }));
 
   const mockDocUpdate = vi.fn();
   const mockDocSet = vi.fn();
   const mockDocGet = vi.fn(() => ({
     exists: true,
-    data: () => ({ pointCost: 80 })
+    data: () => ({ pointCost: 80 }),
   }));
 
   const mockDoc = vi.fn(() => ({
     get: mockDocGet,
     update: mockDocUpdate,
-    set: mockDocSet
+    set: mockDocSet,
   }));
 
   const mockCollectionGet = vi.fn(() => ({
     docs: [
-      { id: "inc-1", data: () => ({ type: "medical", severity: "high", status: "active" }) },
-      { id: "inc-2", data: () => ({ type: "security", severity: "low", status: "resolved" }) }
-    ]
+      {
+        id: "inc-1",
+        data: () => ({ type: "medical", severity: "high", status: "active" }),
+      },
+      {
+        id: "inc-2",
+        data: () => ({ type: "security", severity: "low", status: "resolved" }),
+      },
+    ],
   }));
 
   const mockCollection = vi.fn(() => ({
     doc: mockDoc,
-    get: mockCollectionGet
+    get: mockCollectionGet,
   }));
 
   const mockDb = {
     batch: mockBatch,
-    collection: mockCollection
+    collection: mockCollection,
   };
 
   const firestoreFn: any = () => mockDb;
   firestoreFn.FieldValue = {
-    serverTimestamp: () => "mock-timestamp"
+    serverTimestamp: () => "mock-timestamp",
   };
 
   return {
     initializeApp: vi.fn(),
-    firestore: firestoreFn
+    firestore: firestoreFn,
   };
 });
 
@@ -54,17 +60,17 @@ vi.mock("firebase-admin", () => {
 vi.mock("@google/generative-ai", () => {
   const mockGenerateContent = vi.fn(() => ({
     response: {
-      text: () => "Hello! This is a mock Gemini AI response context."
-    }
+      text: () => "Hello! This is a mock Gemini AI response context.",
+    },
   }));
   const mockGetGenerativeModel = vi.fn(() => ({
-    generateContent: mockGenerateContent
+    generateContent: mockGenerateContent,
   }));
 
   return {
     GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-      getGenerativeModel: mockGetGenerativeModel
-    }))
+      getGenerativeModel: mockGetGenerativeModel,
+    })),
   };
 });
 
@@ -73,13 +79,21 @@ vi.mock("firebase-functions/v2/https", () => ({
   onRequest: (handler: any) => handler,
   onCall: (handler: any) => handler,
   HttpsError: class HttpsError extends Error {
-    constructor(public code: string, message: string) {
+    constructor(
+      public code: string,
+      message: string,
+    ) {
       super(message);
     }
-  }
+  },
 }));
 
-import { seedFirestore, aiConcierge, getVolunteerAnalytics, autonomicConcessionOptimiser } from "../index";
+import {
+  seedFirestore,
+  aiConcierge,
+  getVolunteerAnalytics,
+  autonomicConcessionOptimiser,
+} from "../index";
 
 describe("Firebase Cloud Functions Test Suite", () => {
   beforeEach(() => {
@@ -92,12 +106,14 @@ describe("Firebase Cloud Functions Test Suite", () => {
       const mockRes = {
         set: vi.fn(),
         status: vi.fn().mockReturnThis(),
-        json: vi.fn()
+        json: vi.fn(),
       } as any;
 
       await seedFirestore(mockReq, mockRes);
       expect(mockRes.status).toHaveBeenCalledWith(200);
-      expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+      expect(mockRes.json).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
     });
   });
 
@@ -107,8 +123,8 @@ describe("Firebase Cloud Functions Test Suite", () => {
       const request = {
         data: {
           prompt: "What is the bag policy for the stadium?",
-          sessionId: "test-sess"
-        }
+          sessionId: "test-sess",
+        },
       } as any;
 
       const result = await (aiConcierge as any)(request);
@@ -118,7 +134,9 @@ describe("Firebase Cloud Functions Test Suite", () => {
 
     it("should throw validation error if prompt parameter is missing", async () => {
       const request = { data: {} } as any;
-      await expect((aiConcierge as any)(request)).rejects.toThrow("The function must be called with a prompt string.");
+      await expect((aiConcierge as any)(request)).rejects.toThrow(
+        "The function must be called with a prompt string.",
+      );
     });
   });
 

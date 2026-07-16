@@ -16,9 +16,11 @@ export interface RegisteredAccessibilityNeed {
 }
 
 const ACCESS_NEED_LABELS: Record<AccessibilityNeed, string> = {
-  wheelchair_routing:  "Wheelchair Routing — ensure aisle and ramp access",
-  visual_impairment:   "Visual Impairment — verbal guidance and tactile assistance required",
-  hearing_impairment:  "Hearing Impairment — visual alerts and written communication preferred",
+  wheelchair_routing: "Wheelchair Routing — ensure aisle and ramp access",
+  visual_impairment:
+    "Visual Impairment — verbal guidance and tactile assistance required",
+  hearing_impairment:
+    "Hearing Impairment — visual alerts and written communication preferred",
 };
 
 interface UseAccessibilityNeedsReturn {
@@ -29,7 +31,9 @@ interface UseAccessibilityNeedsReturn {
 }
 
 export function useAccessibilityNeeds(): UseAccessibilityNeedsReturn {
-  const [registeredNeeds, setRegisteredNeeds] = useState<RegisteredAccessibilityNeed[]>([]);
+  const [registeredNeeds, setRegisteredNeeds] = useState<
+    RegisteredAccessibilityNeed[]
+  >([]);
 
   const registerNeed = useCallback((needs: AccessibilityNeed[]): void => {
     const now = new Date().toISOString();

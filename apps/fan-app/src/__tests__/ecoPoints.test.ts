@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { ecoReducer, initialEcoBalance, ECO_POINTS_TABLE } from "@/utils/ecoReducer";
+import {
+  ecoReducer,
+  initialEcoBalance,
+  ECO_POINTS_TABLE,
+} from "@/utils/ecoReducer";
 import type { EcoBalance } from "@/types/fan";
 
 // ============================================================
@@ -28,7 +32,9 @@ describe("ecoReducer — ADD_POINTS", () => {
       type: "ADD_POINTS",
       payload: { points: 15, xp: 30, transactionType: "water_refill" },
     });
-    expect(state.transactions).toHaveLength(initialEcoBalance.transactions.length + 1);
+    expect(state.transactions).toHaveLength(
+      initialEcoBalance.transactions.length + 1,
+    );
     expect(state.transactions[0].type).toBe("water_refill");
     expect(state.transactions[0].points).toBe(15);
   });
@@ -92,7 +98,9 @@ describe("ecoReducer — COMPLETE_MISSION", () => {
       type: "COMPLETE_MISSION",
       payload: { missionId: "mission-1" },
     });
-    const count = state.completedMissions.filter((id) => id === "mission-1").length;
+    const count = state.completedMissions.filter(
+      (id) => id === "mission-1",
+    ).length;
     expect(count).toBe(1);
   });
 });
@@ -120,7 +128,10 @@ describe("ecoReducer — EARN_BADGE", () => {
       description: "test",
       earnedAt: new Date().toISOString(),
     };
-    let state = ecoReducer(initialEcoBalance, { type: "EARN_BADGE", payload: badge });
+    let state = ecoReducer(initialEcoBalance, {
+      type: "EARN_BADGE",
+      payload: badge,
+    });
     state = ecoReducer(state, { type: "EARN_BADGE", payload: badge });
     expect(state.badges).toHaveLength(1);
   });
@@ -129,7 +140,10 @@ describe("ecoReducer — EARN_BADGE", () => {
 describe("ECO_POINTS_TABLE", () => {
   it("contains entries for all transaction types", () => {
     const types: Array<keyof typeof ECO_POINTS_TABLE> = [
-      "transit", "recycling", "water_refill", "sponsor_booth"
+      "transit",
+      "recycling",
+      "water_refill",
+      "sponsor_booth",
     ];
     types.forEach((type) => {
       expect(ECO_POINTS_TABLE[type]).toBeDefined();

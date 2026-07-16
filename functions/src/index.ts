@@ -28,7 +28,7 @@ export const seedFirestore = onRequest(async (req, res) => {
       capacity: 82500,
       latitude: 40.8136,
       longitude: -74.0744,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     // Seed Matches
@@ -40,7 +40,7 @@ export const seedFirestore = onRequest(async (req, res) => {
       kickoffTime: "2026-07-15T20:00:00Z",
       status: "scheduled",
       attendance: null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     // Seed Default Users
@@ -52,7 +52,7 @@ export const seedFirestore = onRequest(async (req, res) => {
         role: "fan",
         preferredLang: "en",
         accessibilityNeeds: { wheelchairRequired: true },
-        dietaryPrefs: []
+        dietaryPrefs: [],
       },
       {
         uid: "auth0-volunteer-jake-456",
@@ -61,8 +61,8 @@ export const seedFirestore = onRequest(async (req, res) => {
         role: "volunteer",
         preferredLang: "en",
         accessibilityNeeds: {},
-        dietaryPrefs: []
-      }
+        dietaryPrefs: [],
+      },
     ];
 
     for (const u of users) {
@@ -74,7 +74,7 @@ export const seedFirestore = onRequest(async (req, res) => {
         preferredLang: u.preferredLang,
         accessibilityNeeds: u.accessibilityNeeds,
         dietaryPrefs: u.dietaryPrefs,
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       // Initialize Leaderboards entry
@@ -84,28 +84,64 @@ export const seedFirestore = onRequest(async (req, res) => {
         userName: u.fullName,
         xpPoints: u.role === "fan" ? 120 : 240,
         ecoPoints: u.role === "fan" ? 60 : 120,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
 
     // Seed Sustainability Challenges
     const challenges = [
-      { id: "c1", title: "Public Transit Commuter", description: "Use the subway or shuttle bus.", pointsValue: 30, xpValue: 60, type: "DAILY", targetCount: 1 },
-      { id: "c2", title: "Smart Waste sorting", description: "Recycle 2 items at smart recycling bins.", pointsValue: 50, xpValue: 100, type: "MISSION", targetCount: 2 }
+      {
+        id: "c1",
+        title: "Public Transit Commuter",
+        description: "Use the subway or shuttle bus.",
+        pointsValue: 30,
+        xpValue: 60,
+        type: "DAILY",
+        targetCount: 1,
+      },
+      {
+        id: "c2",
+        title: "Smart Waste sorting",
+        description: "Recycle 2 items at smart recycling bins.",
+        pointsValue: 50,
+        xpValue: 100,
+        type: "MISSION",
+        targetCount: 2,
+      },
     ];
     for (const c of challenges) {
       const cRef = db.collection("challenges").doc(c.id);
-      batch.set(cRef, { ...c, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      batch.set(cRef, {
+        ...c,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
 
     // Seed Rewards Catalog
     const rewards = [
-      { id: "r1", title: "Free Organic Concession Hotdog", description: "Redeem at Section 112 Concessions.", pointCost: 80, stock: 150, code: "REW-HDOG-982" },
-      { id: "r2", title: "20% Off Merchandise Voucher", description: "20% off at any official FIFA store.", pointCost: 150, stock: 100, code: "REW-MERCH-813" }
+      {
+        id: "r1",
+        title: "Free Organic Concession Hotdog",
+        description: "Redeem at Section 112 Concessions.",
+        pointCost: 80,
+        stock: 150,
+        code: "REW-HDOG-982",
+      },
+      {
+        id: "r2",
+        title: "20% Off Merchandise Voucher",
+        description: "20% off at any official FIFA store.",
+        pointCost: 150,
+        stock: 100,
+        code: "REW-MERCH-813",
+      },
     ];
     for (const r of rewards) {
       const rRef = db.collection("rewards").doc(r.id);
-      batch.set(rRef, { ...r, createdAt: admin.firestore.FieldValue.serverTimestamp() });
+      batch.set(rRef, {
+        ...r,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
 
     // Seed Tickets
@@ -121,11 +157,14 @@ export const seedFirestore = onRequest(async (req, res) => {
       isAccessible: true,
       isUsed: false,
       usedAt: null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp()
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     await batch.commit();
-    res.status(200).json({ success: true, message: "Firestore database successfully seeded!" });
+    res.status(200).json({
+      success: true,
+      message: "Firestore database successfully seeded!",
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -135,12 +174,18 @@ export const seedFirestore = onRequest(async (req, res) => {
 export const aiConcierge = onCall(async (request) => {
   const { prompt, sessionId } = request.data;
   if (!prompt) {
-    throw new HttpsError("invalid-argument", "The function must be called with a prompt string.");
+    throw new HttpsError(
+      "invalid-argument",
+      "The function must be called with a prompt string.",
+    );
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new HttpsError("failed-precondition", "Gemini API key is not configured on the backend environment.");
+    throw new HttpsError(
+      "failed-precondition",
+      "Gemini API key is not configured on the backend environment.",
+    );
   }
 
   try {
@@ -176,27 +221,29 @@ export const aiConcierge = onCall(async (request) => {
 export const getVolunteerAnalytics = onCall(async () => {
   try {
     const querySnapshot = await db.collection("incidents").get();
-    const incidents = querySnapshot.docs.map(doc => doc.data());
+    const incidents = querySnapshot.docs.map((doc) => doc.data());
 
     // Aggregate by type, severity, and status
     const types: Record<string, number> = {};
     const severities: Record<string, number> = {};
     const statuses: Record<string, number> = {};
 
-    incidents.forEach(inc => {
+    incidents.forEach((inc) => {
       if (inc.type) types[inc.type] = (types[inc.type] || 0) + 1;
-      if (inc.severity) severities[inc.severity] = (severities[inc.severity] || 0) + 1;
+      if (inc.severity)
+        severities[inc.severity] = (severities[inc.severity] || 0) + 1;
       if (inc.status) statuses[inc.status] = (statuses[inc.status] || 0) + 1;
     });
 
     return {
       success: true,
       data: {
-        totalActive: incidents.filter(inc => inc.status !== "resolved").length,
+        totalActive: incidents.filter((inc) => inc.status !== "resolved")
+          .length,
         types,
         severities,
-        statuses
-      }
+        statuses,
+      },
     };
   } catch (error: any) {
     throw new HttpsError("internal", error.message);
@@ -209,7 +256,7 @@ export const autonomicConcessionOptimiser = onCall(async (request) => {
   try {
     const rewardsRef = db.collection("rewards");
     const hotdogSnap = await rewardsRef.doc("r1").get();
-    
+
     if (!hotdogSnap.exists) {
       throw new HttpsError("not-found", "Organic Hotdog reward not found.");
     }
@@ -218,11 +265,16 @@ export const autonomicConcessionOptimiser = onCall(async (request) => {
     await rewardsRef.doc("r1").update({ pointCost: currentCost });
 
     // Emit live alert to the global system metrics
-    await db.collection("sustainability_metrics").doc("price_drop_state").set({
-      priceDropActive: !!overstockAlert,
-      message: overstockAlert ? "AI PRICE_DROP Active: Section 112 organic hotdog points cost reduced by 50%!" : "Normal pricing",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    await db
+      .collection("sustainability_metrics")
+      .doc("price_drop_state")
+      .set({
+        priceDropActive: !!overstockAlert,
+        message: overstockAlert
+          ? "AI PRICE_DROP Active: Section 112 organic hotdog points cost reduced by 50%!"
+          : "Normal pricing",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
     return { success: true, pointCost: currentCost };
   } catch (error: any) {

@@ -62,9 +62,9 @@ export function formatRelativeTime(isoString: string): string {
  */
 export function getXPLevel(xp: number): { label: string; color: string } {
   if (xp >= 1000) return { label: "Platinum", color: "#E5E7EB" };
-  if (xp >= 500)  return { label: "Gold",     color: "#D4AF37" };
-  if (xp >= 200)  return { label: "Silver",   color: "#94A3B8" };
-  return             { label: "Bronze",   color: "#92400E" };
+  if (xp >= 500) return { label: "Gold", color: "#D4AF37" };
+  if (xp >= 200) return { label: "Silver", color: "#94A3B8" };
+  return { label: "Bronze", color: "#92400E" };
 }
 
 /**
@@ -73,8 +73,14 @@ export function getXPLevel(xp: number): { label: string; color: string } {
 export function getXPProgress(xp: number): number {
   const thresholds = [200, 500, 1000];
   const currentThreshold = thresholds.find((t) => xp < t) ?? 1000;
-  const prevThreshold = thresholds[thresholds.indexOf(currentThreshold) - 1] ?? 0;
-  return Math.min(100, Math.round(((xp - prevThreshold) / (currentThreshold - prevThreshold)) * 100));
+  const prevThreshold =
+    thresholds[thresholds.indexOf(currentThreshold) - 1] ?? 0;
+  return Math.min(
+    100,
+    Math.round(
+      ((xp - prevThreshold) / (currentThreshold - prevThreshold)) * 100,
+    ),
+  );
 }
 
 /**
@@ -89,10 +95,10 @@ export function generateId(prefix: string = "id"): string {
  * 0–40% → green, 40–70% → yellow, 70–85% → orange, 85–100% → red
  */
 export function densityToColor(density: number): string {
-  if (density >= 85) return "rgba(239, 68, 68, 0.65)";   // red
-  if (density >= 70) return "rgba(249, 115, 22, 0.55)";  // orange
-  if (density >= 40) return "rgba(234, 179, 8, 0.45)";   // yellow
-  return                    "rgba(16, 185, 129, 0.30)";  // green
+  if (density >= 85) return "rgba(239, 68, 68, 0.65)"; // red
+  if (density >= 70) return "rgba(249, 115, 22, 0.55)"; // orange
+  if (density >= 40) return "rgba(234, 179, 8, 0.45)"; // yellow
+  return "rgba(16, 185, 129, 0.30)"; // green
 }
 
 /**

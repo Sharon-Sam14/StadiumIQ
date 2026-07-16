@@ -2,35 +2,53 @@
 
 import Sidebar from "@/components/Sidebar";
 import Card from "@/components/Card";
-import { 
-  Users, 
-  AlertOctagon, 
-  Sparkles, 
-  Send, 
-  Mic, 
-  Clock, 
-  TrendingUp
+import {
+  Users,
+  AlertOctagon,
+  Sparkles,
+  Send,
+  Mic,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const [incidentQueue, setIncidentQueue] = useState([
-    { id: "INC-12", title: "Crowd surge at Gate A", severity: "high", status: "active", time: "19:30" },
-    { id: "INC-13", title: "Elevator 4 malfunction", severity: "medium", status: "assigned", time: "19:28" },
-    { id: "INC-14", title: "Smart Bin overflow (Sec 204)", severity: "low", status: "active", time: "19:20" }
+    {
+      id: "INC-12",
+      title: "Crowd surge at Gate A",
+      severity: "high",
+      status: "active",
+      time: "19:30",
+    },
+    {
+      id: "INC-13",
+      title: "Elevator 4 malfunction",
+      severity: "medium",
+      status: "assigned",
+      time: "19:28",
+    },
+    {
+      id: "INC-14",
+      title: "Smart Bin overflow (Sec 204)",
+      severity: "low",
+      status: "active",
+      time: "19:20",
+    },
   ]);
 
   const [analytics, setAnalytics] = useState({
     totalActive: 3,
     highRisk: 1,
-    categorySummary: "2 medical, 1 infrastructure logs"
+    categorySummary: "2 medical, 1 infrastructure logs",
   });
 
   useEffect(() => {
     // Connect to WebSocket gateway
     const ws = new WebSocket("ws://localhost:3002");
-    
+
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
@@ -40,15 +58,20 @@ export default function DashboardPage() {
             title: payload.incident.description,
             severity: payload.incident.severity.toLowerCase(),
             status: payload.incident.status,
-            time: new Date(payload.incident.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            time: new Date(payload.incident.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
           };
-          setIncidentQueue(prev => [formatted, ...prev]);
-          
+          setIncidentQueue((prev) => [formatted, ...prev]);
+
           // Re-fetch analytics to keep stats synchronized
           fetchAnalytics();
         } else if (payload.type === "SAFETY_BROADCAST") {
           // Trigger a modern alert overlay or console log
-          alert(`[SAFETY BROADCAST - ${payload.severity.toUpperCase()}] ${payload.title}: ${payload.message}`);
+          alert(
+            `[SAFETY BROADCAST - ${payload.severity.toUpperCase()}] ${payload.title}: ${payload.message}`,
+          );
         }
       } catch (err) {
         console.error("WebSocket message parse error:", err);
@@ -57,17 +80,19 @@ export default function DashboardPage() {
 
     const fetchAnalytics = () => {
       fetch("http://localhost:3002/api/v1/volunteers/analytics")
-        .then(res => res.json())
-        .then(envelope => {
+        .then((res) => res.json())
+        .then((envelope) => {
           if (envelope.success && envelope.data) {
             setAnalytics({
               totalActive: envelope.data.totalActive,
               highRisk: envelope.data.highRisk,
-              categorySummary: envelope.data.categorySummary
+              categorySummary: envelope.data.categorySummary,
             });
           }
         })
-        .catch(err => console.warn("Analytics fetch fallback loaded:", err.message));
+        .catch((err) =>
+          console.warn("Analytics fetch fallback loaded:", err.message),
+        );
     };
 
     fetchAnalytics();
@@ -89,13 +114,21 @@ export default function DashboardPage() {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <Clock className="w-5 h-5 text-brand-gold" />
-              <span className="font-outfit font-bold tracking-wider text-sm">MATCH CLOCK:</span>
-              <span className="font-mono text-alert-warning font-bold bg-bg-base/70 px-2.5 py-1 rounded border border-border-subtle text-xs">74:12</span>
+              <span className="font-outfit font-bold tracking-wider text-sm">
+                MATCH CLOCK:
+              </span>
+              <span className="font-mono text-alert-warning font-bold bg-bg-base/70 px-2.5 py-1 rounded border border-border-subtle text-xs">
+                74:12
+              </span>
             </div>
             <div className="h-4 w-px bg-border-subtle" />
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-text-secondary font-medium">STADIUM ATTENDANCE:</span>
-              <span className="font-bold text-text-primary bg-bg-surface px-2 py-0.5 rounded border border-border-subtle">78,412 / 82,500</span>
+              <span className="text-text-secondary font-medium">
+                STADIUM ATTENDANCE:
+              </span>
+              <span className="font-bold text-text-primary bg-bg-surface px-2 py-0.5 rounded border border-border-subtle">
+                78,412 / 82,500
+              </span>
             </div>
           </div>
 
@@ -104,7 +137,7 @@ export default function DashboardPage() {
               <span className="w-2 h-2 rounded-full bg-alert-success animate-pulse" />
               All Gates Operational
             </div>
-            <button 
+            <button
               className="bg-alert-danger hover:bg-alert-danger/85 text-text-primary px-4 py-2 font-outfit font-bold text-xs rounded-sm transition-all duration-200 shadow-low focus:outline-none focus:ring-2 focus:ring-alert-danger focus:ring-offset-2 focus:ring-offset-bg-base"
               onClick={() => console.log("ALERT: EMERGENCY ACTIVATED")}
               aria-label="Activate Emergency Protocols"
@@ -127,7 +160,8 @@ export default function DashboardPage() {
                   StadiumIQ AI Co-pilot Active
                 </h2>
                 <p className="text-xs text-text-secondary mt-1">
-                  Crowd surge warnings running. Real-time predictive analytics models suggest gate redirection recommendations.
+                  Crowd surge warnings running. Real-time predictive analytics
+                  models suggest gate redirection recommendations.
                 </p>
               </div>
             </div>
@@ -143,15 +177,22 @@ export default function DashboardPage() {
             <Card title="Crowd Intelligence" isHoverable={false}>
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-outfit font-extrabold text-text-primary">92%</span>
-                  <span className="text-xs font-bold text-alert-warning bg-alert-warning/10 px-2 py-0.5 rounded border border-alert-warning/20">ORANGE SURGE</span>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary">
+                    92%
+                  </span>
+                  <span className="text-xs font-bold text-alert-warning bg-alert-warning/10 px-2 py-0.5 rounded border border-alert-warning/20">
+                    ORANGE SURGE
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-secondary">
                   <TrendingUp className="w-4 h-4 text-alert-warning" />
                   <span>Surge threat warning: Gate A pathing</span>
                 </div>
                 <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-alert-warning rounded-full" style={{ width: "92%" }} />
+                  <div
+                    className="h-full bg-alert-warning rounded-full"
+                    style={{ width: "92%" }}
+                  />
                 </div>
               </div>
             </Card>
@@ -159,42 +200,63 @@ export default function DashboardPage() {
             <Card title="Active Incidents" isHoverable={false}>
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-outfit font-extrabold text-text-primary">{analytics.totalActive}</span>
-                  <span className={clsx(
-                    "text-xs font-bold px-2 py-0.5 rounded border",
-                    analytics.highRisk > 0 
-                      ? "text-alert-danger bg-alert-danger/10 border-alert-danger/20"
-                      : "text-alert-success bg-alert-success/10 border-alert-success/20"
-                  )}>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary">
+                    {analytics.totalActive}
+                  </span>
+                  <span
+                    className={clsx(
+                      "text-xs font-bold px-2 py-0.5 rounded border",
+                      analytics.highRisk > 0
+                        ? "text-alert-danger bg-alert-danger/10 border-alert-danger/20"
+                        : "text-alert-success bg-alert-success/10 border-alert-success/20",
+                    )}
+                  >
                     {analytics.highRisk > 0 ? "HIGH RISK" : "NORMAL"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-secondary">
                   <AlertOctagon className="w-4 h-4 text-alert-danger" />
-                  <span className="truncate max-w-[180px]" title={analytics.categorySummary}>{analytics.categorySummary}</span>
+                  <span
+                    className="truncate max-w-[180px]"
+                    title={analytics.categorySummary}
+                  >
+                    {analytics.categorySummary}
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-alert-danger rounded-full" style={{ width: `${Math.min(100, (analytics.totalActive / 10) * 100)}%` }} />
+                  <div
+                    className="h-full bg-alert-danger rounded-full"
+                    style={{
+                      width: `${Math.min(100, (analytics.totalActive / 10) * 100)}%`,
+                    }}
+                  />
                 </div>
               </div>
             </Card>
- 
+
             <Card title="Volunteer Activity" isHoverable={false}>
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-2xl font-outfit font-extrabold text-text-primary">342</span>
-                  <span className="text-xs font-bold text-alert-success bg-alert-success/10 px-2 py-0.5 rounded border border-alert-success/20">87% Active</span>
+                  <span className="text-2xl font-outfit font-extrabold text-text-primary">
+                    342
+                  </span>
+                  <span className="text-xs font-bold text-alert-success bg-alert-success/10 px-2 py-0.5 rounded border border-alert-success/20">
+                    87% Active
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-text-secondary">
                   <Users className="w-4 h-4 text-alert-success" />
                   <span>342 checked in, 48 on standby</span>
                 </div>
                 <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                  <div className="h-full bg-alert-success rounded-full" style={{ width: "87%" }} />
+                  <div
+                    className="h-full bg-alert-success rounded-full"
+                    style={{ width: "87%" }}
+                  />
                 </div>
               </div>
             </Card>
- 
+
             <Card title="Live Gate Queue Wait Times" isHoverable={false}>
               <div className="space-y-2 text-xs">
                 <div className="space-y-1">
@@ -203,7 +265,10 @@ export default function DashboardPage() {
                     <span className="text-alert-danger">18.4m wait</span>
                   </div>
                   <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                    <div className="h-full bg-alert-danger rounded-full" style={{ width: "92%" }} />
+                    <div
+                      className="h-full bg-alert-danger rounded-full"
+                      style={{ width: "92%" }}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -212,7 +277,10 @@ export default function DashboardPage() {
                     <span className="text-alert-success">2.4m wait</span>
                   </div>
                   <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                    <div className="h-full bg-alert-success rounded-full" style={{ width: "12%" }} />
+                    <div
+                      className="h-full bg-alert-success rounded-full"
+                      style={{ width: "12%" }}
+                    />
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -221,7 +289,10 @@ export default function DashboardPage() {
                     <span className="text-alert-info">6.1m wait</span>
                   </div>
                   <div className="h-1.5 w-full bg-bg-surface rounded-full overflow-hidden">
-                    <div className="h-full bg-alert-info rounded-full" style={{ width: "45%" }} />
+                    <div
+                      className="h-full bg-alert-info rounded-full"
+                      style={{ width: "45%" }}
+                    />
                   </div>
                 </div>
               </div>
@@ -234,7 +305,10 @@ export default function DashboardPage() {
             <div className="xl:col-span-2 space-y-6">
               <Card title="Incident Queue Log">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse" aria-label="Current Incident Log">
+                  <table
+                    className="w-full text-left border-collapse"
+                    aria-label="Current Incident Log"
+                  >
                     <thead>
                       <tr className="border-b border-border-strong text-text-secondary text-[11px] font-bold tracking-wider uppercase bg-bg-surface/30">
                         <th className="py-3 px-4">ID</th>
@@ -246,21 +320,37 @@ export default function DashboardPage() {
                     </thead>
                     <tbody className="divide-y divide-border-subtle text-xs">
                       {incidentQueue.map((alert) => (
-                        <tr key={alert.id} className="hover:bg-bg-surface/10 transition-colors duration-150">
-                          <td className="py-3 px-4 font-mono font-semibold text-brand-gold">{alert.id}</td>
-                          <td className="py-3 px-4 text-text-primary">{alert.title}</td>
+                        <tr
+                          key={alert.id}
+                          className="hover:bg-bg-surface/10 transition-colors duration-150"
+                        >
+                          <td className="py-3 px-4 font-mono font-semibold text-brand-gold">
+                            {alert.id}
+                          </td>
+                          <td className="py-3 px-4 text-text-primary">
+                            {alert.title}
+                          </td>
                           <td className="py-3 px-4">
-                            <span className={clsx(
-                              "px-2 py-0.5 rounded font-bold uppercase text-[10px] border",
-                              alert.severity === "high" && "bg-alert-danger/10 text-alert-danger border-alert-danger/20",
-                              alert.severity === "medium" && "bg-alert-warning/10 text-alert-warning border-alert-warning/20",
-                              alert.severity === "low" && "bg-alert-success/10 text-alert-success border-alert-success/20"
-                            )}>
+                            <span
+                              className={clsx(
+                                "px-2 py-0.5 rounded font-bold uppercase text-[10px] border",
+                                alert.severity === "high" &&
+                                  "bg-alert-danger/10 text-alert-danger border-alert-danger/20",
+                                alert.severity === "medium" &&
+                                  "bg-alert-warning/10 text-alert-warning border-alert-warning/20",
+                                alert.severity === "low" &&
+                                  "bg-alert-success/10 text-alert-success border-alert-success/20",
+                              )}
+                            >
                               {alert.severity}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-text-secondary capitalize">{alert.status}</td>
-                          <td className="py-3 px-4 text-text-tertiary font-mono">{alert.time}</td>
+                          <td className="py-3 px-4 text-text-secondary capitalize">
+                            {alert.status}
+                          </td>
+                          <td className="py-3 px-4 text-text-tertiary font-mono">
+                            {alert.time}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -276,20 +366,30 @@ export default function DashboardPage() {
                   {/* Mock Conversation Threads */}
                   <div className="space-y-3 overflow-y-auto pr-1 text-xs">
                     <div className="flex flex-col gap-1.5 items-end">
-                      <span className="text-[9px] text-text-tertiary">Carlos Mendes (Ops)</span>
+                      <span className="text-[9px] text-text-tertiary">
+                        Carlos Mendes (Ops)
+                      </span>
                       <div className="bg-bg-surface border border-border-strong text-text-primary p-3 rounded-md max-w-[85%]">
-                        What is causing the crowd delay warnings at Gate A right now?
+                        What is causing the crowd delay warnings at Gate A right
+                        now?
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5 items-start">
                       <div className="flex items-center gap-1">
                         <Sparkles className="w-3.5 h-3.5 text-brand-gold" />
-                        <span className="text-[9px] text-brand-gold font-bold">StadiumIQ AI</span>
+                        <span className="text-[9px] text-brand-gold font-bold">
+                          StadiumIQ AI
+                        </span>
                       </div>
                       <div className="bg-brand-green-deep/20 border border-brand-green-light/30 text-text-primary p-3 rounded-md max-w-[90%] space-y-2">
-                        <p>Real-time telemetry reports a flow slowdown (Gate A check-in rate decreased by 35% over 5 minutes).</p>
-                        <p className="font-semibold text-brand-gold">Suggested Action:</p>
+                        <p>
+                          Real-time telemetry reports a flow slowdown (Gate A
+                          check-in rate decreased by 35% over 5 minutes).
+                        </p>
+                        <p className="font-semibold text-brand-gold">
+                          Suggested Action:
+                        </p>
                         <ul className="list-disc list-inside space-y-1 text-text-secondary">
                           <li>Reroute incoming fans via Gate B.</li>
                           <li>Open volunteer overflow channels.</li>
@@ -301,17 +401,20 @@ export default function DashboardPage() {
                   {/* Message Input Box */}
                   <div className="mt-4 flex gap-2">
                     <div className="flex-1 bg-bg-base border border-border-subtle rounded-md flex items-center px-3 gap-2 focus-within:border-brand-gold transition-colors duration-200">
-                      <input 
+                      <input
                         type="text"
                         placeholder="Ask AI Copilot..."
                         className="w-full bg-transparent border-none text-xs text-text-primary focus:outline-none h-9"
                         aria-label="Write operational query to AI"
                       />
-                      <button className="text-text-secondary hover:text-text-primary" aria-label="Speak operational query">
+                      <button
+                        className="text-text-secondary hover:text-text-primary"
+                        aria-label="Speak operational query"
+                      >
                         <Mic className="w-4 h-4" />
                       </button>
                     </div>
-                    <button 
+                    <button
                       className="bg-brand-gold hover:bg-brand-gold/90 text-bg-base p-2.5 rounded-md flex items-center justify-center transition-colors duration-150"
                       aria-label="Send message"
                     >

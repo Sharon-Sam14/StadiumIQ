@@ -11,7 +11,9 @@ interface UseAnimationTriggerReturn {
   reset: () => void;
 }
 
-export function useAnimationTrigger(durationMs: number = 1000): UseAnimationTriggerReturn {
+export function useAnimationTrigger(
+  durationMs: number = 1000,
+): UseAnimationTriggerReturn {
   const [isTriggered, setIsTriggered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

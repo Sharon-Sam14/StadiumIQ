@@ -6,7 +6,10 @@ import { useEffect, useRef, useState } from "react";
 
 const INITIAL_ELAPSED_SECONDS = 4512; // Starting at ~75:12 for demo realism
 
-export function useMatchClock(): { elapsedSeconds: number; isRunning: boolean } {
+export function useMatchClock(): {
+  elapsedSeconds: number;
+  isRunning: boolean;
+} {
   const [elapsedSeconds, setElapsedSeconds] = useState(INITIAL_ELAPSED_SECONDS);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);

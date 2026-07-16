@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { classifyWaste, hasRecognizedWasteKeyword } from "@/utils/wasteClassifier";
+import {
+  classifyWaste,
+  hasRecognizedWasteKeyword,
+} from "@/utils/wasteClassifier";
 
 // ============================================================
 // WASTE CLASSIFIER UNIT TESTS

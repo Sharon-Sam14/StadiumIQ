@@ -18,29 +18,63 @@ const WASTE_KEYWORD_MAP: readonly KeywordCategory[] = [
   {
     category: "recyclable",
     keywords: [
-      "plastic", "bottle", "cup", "pet", "container", "wrapper",
-      "polystyrene", "foam", "straw", "bag", "packaging",
+      "plastic",
+      "bottle",
+      "cup",
+      "pet",
+      "container",
+      "wrapper",
+      "polystyrene",
+      "foam",
+      "straw",
+      "bag",
+      "packaging",
     ],
   },
   {
     category: "metal",
     keywords: [
-      "can", "tin", "aluminum", "aluminium", "soda", "beer",
-      "metal", "foil", "bottle cap",
+      "can",
+      "tin",
+      "aluminum",
+      "aluminium",
+      "soda",
+      "beer",
+      "metal",
+      "foil",
+      "bottle cap",
     ],
   },
   {
     category: "paper",
     keywords: [
-      "paper", "cardboard", "box", "newspaper", "magazine",
-      "carton", "receipt", "napkin", "tissue", "flyer",
+      "paper",
+      "cardboard",
+      "box",
+      "newspaper",
+      "magazine",
+      "carton",
+      "receipt",
+      "napkin",
+      "tissue",
+      "flyer",
     ],
   },
   {
     category: "compost",
     keywords: [
-      "food", "organic", "apple", "banana", "hotdog", "sandwich",
-      "fruit", "vegetable", "peel", "core", "leftovers", "waste",
+      "food",
+      "organic",
+      "apple",
+      "banana",
+      "hotdog",
+      "sandwich",
+      "fruit",
+      "vegetable",
+      "peel",
+      "core",
+      "leftovers",
+      "waste",
     ],
   },
 ] as const;
@@ -119,6 +153,6 @@ export function classifyWaste(input: string): WasteClassification {
 export function hasRecognizedWasteKeyword(input: string): boolean {
   const normalized = input.toLowerCase().trim();
   return WASTE_KEYWORD_MAP.some(({ keywords }) =>
-    keywords.some((kw) => normalized.includes(kw))
+    keywords.some((kw) => normalized.includes(kw)),
   );
 }
